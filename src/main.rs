@@ -1,46 +1,14 @@
-use clap::{Parser};
-use std::{fs::File,path::PathBuf};
 use ignore::WalkBuilder;
-use std::io::{BufWriter,Write};
+use std::{io::{BufWriter,Write},fs::File};
+use configs::{Args};
+use clap::{Parser};
 
 mod tree_utils;
 mod io_utils;
 mod filter_utils;
+mod configs;
 
-#[derive(Parser,Debug)]
-#[command(name = "onesource", author = "lolLeo", version = "0.2.0")]
-struct Args{
-    // File setting
-    #[arg(default_value = ".",help = "Set location")]//Target path
-    path :PathBuf,
-    #[arg(short,long,default_value="allCode.txt")]//Output file name
-    output_path:PathBuf,
-    
-    //content setting
-    #[arg(long,action = clap::ArgAction::SetTrue,help="Don't use .gitignore")]
-    no_ignore:bool,
-    #[arg(short,long,default_value="*")]
-    include:String,
-    #[arg(short='x',long,default_value="")]
-    exclude:String,
-    #[arg(short='s', long, default_value_t = 500, help = "Max file size in KB")]
-    pub max_size: usize,
-    //Tree setting
-    #[arg(long,visible_alias="ti")]
-    tree_include: Option<String>,
-    #[arg(long,visible_alias="tx")]
-    tree_exclude: Option<String>,
-    #[arg(long,action = clap::ArgAction::SetTrue,help="Don't write tree")]
-    no_tree:bool,
-    #[arg(long,action = clap::ArgAction::SetTrue,help="Tree don't use .gitignore")]
-    tree_no_ignore:bool,
 
-    // Behavior setting
-    #[arg(long, action = clap::ArgAction::SetTrue, help = "Preview file list without writing to disk")]
-    dry_run: bool,
-    #[arg(long,action = clap::ArgAction::SetTrue,help = "Show all argument (DEBUG)")]
-    show_arg:bool,
-}
 fn struct_tree<W: Write>(args:&Args,writer: &mut W){
     let final_include = args.tree_include.as_deref().unwrap_or(&args.include);
     let final_exclude = args.tree_exclude.as_deref().unwrap_or(&args.exclude);
@@ -126,6 +94,9 @@ fn rw_file<W: Write>(args:&Args,writer:&mut W){
 }
 fn main() {
     let args = Args::parse();
+    if args.save{
+        
+    }
     if args.show_arg{ show_args(&args);}
 
     if args.dry_run {

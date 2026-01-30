@@ -1,6 +1,6 @@
 {
     "output": "allCode.txt",
-    "include": "*.rs",
+    "include": "*.rs,*.toml",
     "exclude": null,
     "no_ignore": false,
     "tree_include": "*",
