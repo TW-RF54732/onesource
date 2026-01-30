@@ -17,11 +17,11 @@ pub struct Args {
     #[arg(long, action = clap::ArgAction::SetTrue, help = "Ignore .gitignore rules when scanning file content")]
     pub no_ignore: bool,
 
-    #[arg(short, long, default_value = "*", help = "Comma-separated list of patterns to include (gitignore syntax, e.g. '*.rs,src/')")]
+    #[arg(short, long, help = "Comma-separated list of patterns to include (gitignore syntax, e.g. '*.rs,src/')")]
     pub include: Option<String>,
 
-    #[arg(short = 'x', long, default_value = "", help = "Comma-separated list of patterns to exclude (gitignore syntax, e.g. 'target/,*.log')")]
-    pub exclude: String,
+    #[arg(short = 'x', long, help = "Comma-separated list of patterns to exclude (gitignore syntax, e.g. 'target/,*.log')")]
+    pub exclude: Option<String>,
 
     // Tree setting
     #[arg(long, visible_alias = "ti", help = "Custom include patterns for tree view (overrides global include)")]
@@ -46,7 +46,7 @@ pub struct Args {
 
     #[serde(skip)]
     #[arg(long,action = clap::ArgAction::SetTrue,help = "Show all argument (DEBUG)")]
-    pub show_arg:bool,
+    pub show_arg:Option<bool>,
 
     #[serde(skip)]
     #[arg(long,action = clap::ArgAction::SetTrue,help = "Save all argument into .onesourcerc(JSON)")]

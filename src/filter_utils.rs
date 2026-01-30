@@ -11,19 +11,11 @@ impl FileFilter{
     /// 1. **Exclude first**: If the path matches `exclude`, it is DISCARDED immediately.
     /// 2. **Include second**: If not excluded, the path must match `include` to be KEPT.
     /// 3. **Default**: If `include` is `None` (*), all non-excluded paths are KEPT.
-    pub fn new(include:&str,exclude:&str)->Self{
-
-        let include = if include == "*"|| include.is_empty(){
-            None
-        }else{
-            Self::build_set(include)
-        };
-        let exclude = if exclude == "*"|| exclude.is_empty(){
-            None
-        }else{
-            Self::build_set(exclude)
-        };
-        Self { include, exclude }
+    pub fn new(include:Option<&str>,exclude:Option<&str>)->Self{
+        Self { 
+            include:include.and_then(|the_str|{Self::build_set(the_str)}),
+            exclude:exclude.and_then(|the_str|{Self::build_set(the_str)})
+        }
     }
     fn build_set(patterns: &str) -> Option<GlobSet> {
         // Use .gitignore logic

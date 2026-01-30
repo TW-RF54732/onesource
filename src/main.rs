@@ -10,8 +10,8 @@ mod configs;
 
 
 fn struct_tree<W: Write>(args:&Args,writer: &mut W){
-    let final_include = args.tree_include.as_deref().unwrap_or(&args.include);
-    let final_exclude = args.tree_exclude.as_deref().unwrap_or(&args.exclude);
+    let final_include = args.tree_include.as_deref().or(args.include.as_deref());
+    let final_exclude = args.tree_exclude.as_deref().or(args.exclude.as_deref());
     let filter = filter_utils::FileFilter::new(final_include, final_exclude);
     let mut tree_root = tree_utils::Node::new(true);
     
@@ -41,7 +41,7 @@ fn struct_tree<W: Write>(args:&Args,writer: &mut W){
     tree_root.print("",writer).expect("Error at print tree");
 }
 fn rw_file<W: Write>(args:&Args,writer:&mut W){
-    let filter = filter_utils::FileFilter::new(&args.include, &args.exclude);
+    let filter = filter_utils::FileFilter::new(args.include.as_deref(), args.exclude.as_deref());
     let walker = WalkBuilder::new(&args.path)
         .standard_filters(!args.no_ignore)
         .require_git(false)
@@ -94,10 +94,7 @@ fn rw_file<W: Write>(args:&Args,writer:&mut W){
 }
 fn main() {
     let args = Args::parse();
-    if args.save{
-        
-    }
-    if args.show_arg{ show_args(&args);}
+    if args.show_arg.unwrap_or(true){ show_args(&args);}
 
     if args.dry_run {
         println!("\n[DRY RUN MODE] Previews only, no files will be written.\n");
