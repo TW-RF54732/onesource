@@ -8,29 +8,42 @@
 [![PyPI version](https://img.shields.io/pypi/v/onesource-cli.svg)](https://pypi.org/project/onesource-cli/)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Roadmap: Rust Rewrite](https://img.shields.io/badge/Roadmap-Rust%20Rewrite-orange?logo=rust)
 
 ![OneSource Demo](OneSource_demo.gif)
 
 **OneSource** aggregates your entire project into a single, context-rich text file (or clipboard) for LLMs like Claude, ChatGPT, and Gemini.
 
 It bridges the gap between **Windows users** who want a simple `.exe` and **Python developers** who want a native CLI tool.
+---
+## 🦀 The Rust Future (v2.0 Alpha)
+OneSource is currently being rewritten in Rust to provide:
+
+- Blazing Fast Speed: Near-instant processing for massive monorepos.
+
+- Zero Dependencies: A truly single-binary experience for all platforms.
+
+- Memory Safety: Guaranteed stability during deep directory recursion.
+- Highly optimized for multi-core scalability.
+
+Check out the `rust-dev` branch to see the progress!
 
 ---
 
-## 🥊 Why OneSource? (vs The Rest)
+## 🥊 Why OneSource? Comparison & Positioning
+We don't aim to be the most complex tool; we aim to be the one that stays out of your way.
 
-| Feature | **OneSource** ⚡ | **Repomix** (Repopack) | **Gitingest** | **code2prompt** |
-| :--- | :--- | :--- | :--- | :--- |
-| **No Node.js Required** | ✅ **YES** (Standalone EXE) | ❌ No (Need NPM) | ✅ Yes (Web) | ✅ Yes (Rust) |
-| **Local Privacy** | ✅ **100% Local** | ✅ Local | ❌ **Uploads/Git Push needed** | ✅ Local |
-| **Windows Friendly** | ✅ **Native .exe** | ❌ Complex setup | ✅ Web browser | ⚠️ CLI focused |
-| **Edit/Extend** | ✅ **Simple Python** | ❌ TypeScript | ❌ Web Service | ❌ Rust (Harder to mod) |
-| **Clipboard Auto-Copy**| ✅ **Built-in** | ✅ Yes | ❌ Manual copy | ✅ Yes |
+| Feature | **OneSource** ⚡ | **Repomix** | **Gitingest** | **code2prompt** |
+| --- | --- | --- | --- | --- |
+| **Setup Friction** | ✅ **Zero** (Single EXE) | ❌ High (Node.js) | ✅ Low (Web) | ⚠️ Med (Binary) |
+| **Local Privacy** | ✅ **100% Local** | ✅ Local | ❌ **Cloud-based** | ✅ Local |
+| **System Residue** | ✅ **Zero** (Delete = Gone) | ❌ `node_modules` | ✅ None | ✅ None |
+| **Setup Convenience** | ✅ Instant (one line pip/powershell commend) | ❌ High Friction (NPM) | ✅ Instant (Web) | ⚠️ Manual build from rust|
+| **Clipboard Copy** | ✅ **Built-in** | ✅ Yes | ❌ Manual | ✅ Yes |
 
-* **vs Repomix:** Stop installing 200MB of `node_modules` just to pack a text file. OneSource is lightweight.
+* **vs Repomix:** Stop installing 200MB of `node_modules` just to pack a text file. OneSource is truly lightweight.
 * **vs Gitingest:** Don't push your private secrets or messy WIP code to GitHub just to analyze it. OneSource works on your *local* disk, offline.
-* **vs code2prompt:** Easier for Python developers to customize and integrate into their own scripts.
-
+* **vs code2prompt:** OneSource focuses on the **Windows native experience** and automated installation. While code2prompt is a solid Rust alternative, we prioritize "Zero-Friction" deployment for every developer.
 ---
 
 ## 📥 Installation
