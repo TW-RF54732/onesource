@@ -1,6 +1,9 @@
 use clap::{Parser};
 use serde::{Serialize, Deserialize};
 use std::{path::PathBuf};
+use std::{fs, option};
+use std::path::Path;
+
 
 #[derive(Parser,Debug,Serialize, Deserialize)]
 #[command(name = "onesource", author = "lolLeo", version = "0.2.0")]
@@ -51,4 +54,19 @@ pub struct Args {
     #[serde(skip)]
     #[arg(long,action = clap::ArgAction::SetTrue,help = "Save all argument into .onesourcerc(JSON)")]
     pub save: bool,
+
+    #[serde(skip)]
+    #[arg(long,action = clap::ArgAction::SetTrue,help = "Ignore the .onesourcerc configuration file")]
+    pub no_config:bool,
+}
+impl Args {
+    pub fn read_config<P:AsRef<Path>>(path:P)->Option<Self>{
+        let content = fs::read_to_string(path).ok()?;
+        serde_json::from_str(&content).ok()?
+    }
+    pub fn save_config<P: AsRef<Path>>(&self, path: P) -> Result<(), Box<dyn std::error::Error>> {
+        let json_string = serde_json::to_string_pretty(self)?;
+        fs::write(path, json_string)?;
+        Ok(())
+    }
 }

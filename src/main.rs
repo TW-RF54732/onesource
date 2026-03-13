@@ -1,7 +1,7 @@
 use ignore::WalkBuilder;
 use std::{io::{BufWriter,Write},fs::File};
 use configs::{Args};
-use clap::{Parser};
+use clap::{Arg, Parser};
 
 mod tree_utils;
 mod io_utils;
@@ -92,6 +92,12 @@ fn rw_file<W: Write>(args:&Args,writer:&mut W){
     println!("======File processing completed======");
     println!("Files Processed: {}",count);
 }
+
+fn conbine_args(input_args:Args,configs:Args)->Args{
+
+    configs
+}
+
 fn main() {
     let args = Args::parse();
     if args.show_arg.unwrap_or(true){ show_args(&args);}
