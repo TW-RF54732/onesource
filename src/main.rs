@@ -1,5 +1,5 @@
 use ignore::WalkBuilder;
-use std::{io::{BufWriter,Write},fs::File};
+use std::{fs::File, io::{BufWriter,Write}, path::PathBuf};
 use configs::{Args};
 use clap::{Arg, Parser};
 
@@ -100,6 +100,12 @@ fn conbine_args(input_args:Args,configs:Args)->Args{
 
 fn main() {
     let args = Args::parse();
+    // Save config
+    if args.save {
+        let save_path:PathBuf = PathBuf::from("./.onesourcerc");
+        Args::save_config(&args,save_path).expect("save failed");
+    }
+    
     if args.show_arg.unwrap_or(true){ show_args(&args);}
 
     if args.dry_run {
