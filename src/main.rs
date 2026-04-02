@@ -1,7 +1,9 @@
 use ignore::WalkBuilder;
-use std::{fs::File, io::{BufWriter,Write}, path::PathBuf};
+use std::{fs::File, io::{BufWriter,Write},path::{self, Path}};
 use configs::{Args};
 use clap::{Arg, Parser};
+
+use crate::configs::AppConfig;
 
 mod tree_utils;
 mod io_utils;
@@ -9,7 +11,7 @@ mod filter_utils;
 mod configs;
 
 
-fn struct_tree<W: Write>(args:&Args,writer: &mut W){
+fn struct_tree<W: Write>(args:&AppConfig,writer: &mut W){
     let final_include = args.tree_include.as_deref().or(args.include.as_deref());
     let final_exclude = args.tree_exclude.as_deref().or(args.exclude.as_deref());
     let filter = filter_utils::FileFilter::new(final_include, final_exclude);
@@ -40,7 +42,7 @@ fn struct_tree<W: Write>(args:&Args,writer: &mut W){
     writeln!(writer,"{}/", root_name).expect("Write root failed");
     tree_root.print("",writer).expect("Error at print tree");
 }
-fn rw_file<W: Write>(args:&Args,writer:&mut W){
+fn rw_file<W: Write>(args:&AppConfig,writer:&mut W){
     let filter = filter_utils::FileFilter::new(args.include.as_deref(), args.exclude.as_deref());
     let walker = WalkBuilder::new(&args.path)
         .standard_filters(!args.no_ignore)
@@ -93,68 +95,109 @@ fn rw_file<W: Write>(args:&Args,writer:&mut W){
     println!("Files Processed: {}",count);
 }
 
-fn conbine_args(input_args:Args,configs:Args)->Args{
-
-    configs
-}
 
 fn main() {
-    let args = Args::parse();
-    // Save config
-    if args.save {
-        let save_path:PathBuf = PathBuf::from("./.onesourcerc");
-        Args::save_config(&args,save_path).expect("save failed");
+    let mut args = Args::parse();
+    
+    /*
+    Args priority :
+    User input -> saves -> default
+    
+    Args usage:
+    configs::Args -> use for user input.
+    configs::AppConfig -> final config after all config, input logics that functions read.
+    */
+
+    // Args logic
+    // 1. Get the user input and the configs.
+    let base_path = args.path.as_deref().unwrap_or(std::path::Path::new("."));
+    let config_path = base_path.join(".onesourcerc");
+
+    // 2. Read the user input first then the saved configs
+    if !args.no_config {
+        if let Some(config) = Args::read_config(&config_path) {
+            print!(".onesourcerc found, using settings.\n");
+            args.output_path = args.output_path.or(config.output_path);
+            args.no_ignore = args.no_ignore.or(config.no_ignore);
+            args.include = args.include.or(config.include);
+            args.exclude = args.exclude.or(config.exclude);
+            args.tree_include = args.tree_include.or(config.tree_include);
+            args.tree_exclude = args.tree_exclude.or(config.tree_exclude);
+            args.no_tree = args.no_tree.or(config.no_tree);
+            args.tree_no_ignore = args.tree_no_ignore.or(config.tree_no_ignore);
+            args.max_size = args.max_size.or(config.max_size);
+            
+            // NOTE: args.path, args.show_arg, args.save, args.dry_run NOT inherit by saved config
+        } else {print!("No .onesourcerc found, use default settings.\n")}
+    }
+
+    // 3. apply final settings.
+    
+    
+    // Debug: show all args
+    let is_show_arg = args.show_arg.unwrap_or(false);
+    let is_save = args.save;   
+    if is_save {
+        if let Err(e) = args.save_config(&config_path) {
+            eprintln!("警告：設定檔儲存失敗 ({})", e);
+        } else {
+            println!("設定已成功儲存至 {}", config_path.display());
+        }
     }
     
-    if args.show_arg.unwrap_or(true){ show_args(&args);}
+    let app_config = args.resolve();
 
-    if args.dry_run {
+    
+    //Start proccess
+    if app_config.dry_run {
         println!("\n[DRY RUN MODE] Previews only, no files will be written.\n");
         
-        if !args.no_tree {
-            struct_tree(&args, &mut std::io::stdout());
+        if !app_config.no_tree {
+            struct_tree(&app_config, &mut std::io::stdout());
         }
 
         // if dry run, no writer
         let mut sink = std::io::sink();
-        rw_file(&args, &mut sink);
+        rw_file(&app_config, &mut sink);
 
         println!("Dry run finished. If executed, file would be saved at: {}",std::env::current_dir()
-                                                                                .map(|dir| dir.join(&args.output_path))
-                                                                                .unwrap_or_else(|_| args.output_path.clone()) 
+                                                                                .map(|dir| dir.join(&app_config.output_path))
+                                                                                .unwrap_or_else(|_| app_config.output_path.clone()) 
                                                                                 .display());
 
     } else {
         
         // Only not dry will creat file
-        let file = File::create(&args.output_path).expect("Create output file failed");
+        let file = File::create(&app_config.output_path).expect("Create output file failed");
         let mut writer = BufWriter::new(file);
         
-        let abs_path = args.output_path.canonicalize()
-            .unwrap_or_else(|_| args.output_path.clone()); // 
+        let abs_path = app_config.output_path.canonicalize()
+            .unwrap_or_else(|_| app_config.output_path.clone()); // 
 
         let path_str = abs_path.display().to_string();
 
         let abs_path_display = path_str
             .strip_prefix(r"\\?\")
             .unwrap_or(&path_str);
-                if !args.no_tree {
+                if !app_config.no_tree {
                     let mut stdout = std::io::stdout();
                     let mut multi_writer = io_utils::tee(&mut writer, &mut stdout);
-                    struct_tree(&args, &mut multi_writer);
+                    struct_tree(&app_config, &mut multi_writer);
                 }
 
-        rw_file(&args, &mut writer);
+        rw_file(&app_config, &mut writer);
         
         writer.flush().expect("Flush failed");
         
         println!("Output saved to: {}", abs_path_display);
     }
 
+
+    if is_show_arg { show_args(&app_config); } 
     // println!("=====================================");
 }
 
-fn show_args(args:&Args){
+fn show_args(args:&AppConfig){
     println!("======ARGS======");
     println!("Target path: {:#?}",args);    
     println!("======Others======")    
