@@ -139,9 +139,9 @@ fn main() {
     let is_save = args.save;   
     if is_save {
         if let Err(e) = args.save_config(&config_path) {
-            eprintln!("警告：設定檔儲存失敗 ({})", e);
+            eprintln!("WARNING: Fail to save configs ({})", e);
         } else {
-            println!("設定已成功儲存至 {}", config_path.display());
+            println!("Save Successfully {}", config_path.display());
         }
     }
     
