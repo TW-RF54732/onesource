@@ -1,9 +1,9 @@
-# OneSource Network Installer
-# Run with: irm https://raw.githubusercontent.com/TW-RF54732/OneSource/main/install.ps1 | iex
+# onesource Network Installer
+# Run with: irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
 
-$Repo = "TW-RF54732/OneSource"
-$InstallDir = "$env:LOCALAPPDATA\Programs\OneSource"
-$ExeName = "OneSource.exe"
+$Repo = "TW-RF54732/onesource"
+$InstallDir = "$env:LOCALAPPDATA\Programs\onesource"
+$ExeName = "onesource.exe"
 
 # Clear screen for a fresh look
 Clear-Host
@@ -19,7 +19,7 @@ Write-Host "
 | |__| | |\  | |___   ___) | |_| | |_| |  _ <| |___| |___ 
  \____/|_| \_|_____| |____/ \___/ \___/|_| \_\\____|_____|
                           
- >> OneSource Network Installer | Vibe Coding Edition <<
+ >> onesource Network Installer | Vibe Coding Edition <<
 ==========================================================
 " -ForegroundColor Cyan
 
@@ -71,9 +71,9 @@ $CurrentPath = [Environment]::GetEnvironmentVariable("Path", "User")
 
 if ($CurrentPath -notlike "*$InstallDir*") {
     [Environment]::SetEnvironmentVariable("Path", "$CurrentPath;$InstallDir", "User")
-    Write-Host "      [SUCCESS] Added OneSource to your User PATH." -ForegroundColor Green
+    Write-Host "      [SUCCESS] Added onesource to your User PATH." -ForegroundColor Green
 } else {
-    Write-Host "      [SKIP] OneSource is already in your PATH." -ForegroundColor Gray
+    Write-Host "      [SKIP] onesource is already in your PATH." -ForegroundColor Gray
 }
 
 Write-Host "`n==========================================================" -ForegroundColor Cyan
@@ -82,5 +82,5 @@ Write-Host "  Location: $InstallDir\$ExeName"
 Write-Host "  Version:  $Version"
 Write-Host ""
 Write-Host "  * IMPORTANT: You may need to RESTART your terminal *"
-Write-Host "    to use the 'OneSource' command."
+Write-Host "    to use the 'onesource' command."
 Write-Host "==========================================================" -ForegroundColor Cyan
