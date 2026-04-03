@@ -1,0 +1,63 @@
+name: Publish & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  pypi-publish:
+    name: Upload to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  build-and-release:
+    name: Build EXE & GitHub Release
+    runs-on: windows-latest
+    needs: pypi-publish
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install .
+          pip install pyinstaller
+
+      - name: Build EXE with PyInstaller
+        run: python make_exe.py
+
+      - name: Create Release & Upload Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/OneSource.exe
+          body_path: release_notes.md
+          draft: false
+          prerelease: false

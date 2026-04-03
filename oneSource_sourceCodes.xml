@@ -1,0 +1,671 @@
+<project_structure>
+OneSource/
+|-- .github
+|   \-- workflows
+|       \-- release.yml
+|-- onesource
+|   |-- __init__.py
+|   \-- main.py
+|-- venv
+|-- .gitignore
+|-- MANIFEST.in
+|-- README.md
+|-- install.ps1
+|-- make_exe.py
+|-- release_notes.md
+\-- setup.py
+</project_structure>
+
+<file path=".gitignore">
+__pycache__/
+*.py[cod]
+*$py.class
+
+venv/
+env/
+.env
+
+build/
+dist/
+*.spec
+
+
+*.egg-info/
+.eggs/
+
+
+allCode.txt
+.onesourcerc
+
+.vscode/
+.idea/
+
+release.py
+</file>
+
+<file path="install.ps1">
+# OneSource Network Installer
+# Run with: irm https://raw.githubusercontent.com/TW-RF54732/OneSource/main/install.ps1 | iex
+
+$Repo = "TW-RF54732/OneSource"
+$InstallDir = "$env:LOCALAPPDATA\Programs\OneSource"
+$ExeName = "OneSource.exe"
+
+# Clear screen for a fresh look
+Clear-Host
+
+# ----------------------------------------------------------
+# BANNER (Static, no dynamic version needed here)
+# ----------------------------------------------------------
+Write-Host "
+==========================================================
+  ____  _   _ _____   ____   ___  _   _ ____   ____ _____ 
+ / __ \| \ | | ____| / ___| / _ \| | | |  _ \ / ___| ____|
+| |  | |  \| |  _|   \___ \| | | | | | | |_) | |   |  _|  
+| |__| | |\  | |___   ___) | |_| | |_| |  _ <| |___| |___ 
+ \____/|_| \_|_____| |____/ \___/ \___/|_| \_\\____|_____|
+                          
+ >> OneSource Network Installer | Vibe Coding Edition <<
+==========================================================
+" -ForegroundColor Cyan
+
+# 1. Get Latest Release Info
+Write-Host "[1/4] Fetching latest release info from GitHub..."
+try {
+    # Fetch release data from GitHub API
+    $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
+    
+    # Find the executable asset
+    $Asset = $Release.assets | Where-Object { $_.name -eq $ExeName } | Select-Object -First 1
+    
+    if (-not $Asset) { throw "Could not find '$ExeName' in the latest release." }
+    
+    $DownloadUrl = $Asset.browser_download_url
+    $Version = $Release.tag_name
+    
+    Write-Host "      Found Version: $Version" -ForegroundColor Gray
+}
+catch {
+    Write-Error "Failed to fetch release info. Please check your internet connection."
+    Write-Error "Error details: $_"
+    exit 1
+}
+
+# 2. Setup Directory
+Write-Host "[2/4] Preparing installation directory..."
+if (-not (Test-Path $InstallDir)) {
+    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+    Write-Host "      Created: $InstallDir" -ForegroundColor Gray
+} else {
+    Write-Host "      Directory exists." -ForegroundColor Gray
+}
+
+# 3. Download
+Write-Host "[3/4] Downloading $ExeName ($Version)..."
+try {
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile "$InstallDir\$ExeName"
+    Write-Host "      Download complete." -ForegroundColor Gray
+}
+catch {
+    Write-Error "Download failed: $_"
+    exit 1
+}
+
+# 4. Update PATH
+Write-Host "[4/4] Configuring environment (PATH)..."
+$CurrentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+
+if ($CurrentPath -notlike "*$InstallDir*") {
+    [Environment]::SetEnvironmentVariable("Path", "$CurrentPath;$InstallDir", "User")
+    Write-Host "      [SUCCESS] Added OneSource to your User PATH." -ForegroundColor Green
+} else {
+    Write-Host "      [SKIP] OneSource is already in your PATH." -ForegroundColor Gray
+}
+
+Write-Host "`n==========================================================" -ForegroundColor Cyan
+Write-Host "  INSTALLATION COMPLETE!" -ForegroundColor Green
+Write-Host "  Location: $InstallDir\$ExeName"
+Write-Host "  Version:  $Version"
+Write-Host ""
+Write-Host "  * IMPORTANT: You may need to RESTART your terminal *"
+Write-Host "    to use the 'OneSource' command."
+Write-Host "==========================================================" -ForegroundColor Cyan
+</file>
+
+<file path="make_exe.py">
+import PyInstaller.__main__
+
+if __name__ == "__main__":
+    PyInstaller.__main__.run([
+        'onesource/main.py', 
+        '--name=OneSource',
+        '--onefile',
+        '--console',
+        '--clean',
+        '--collect-all=tiktoken',
+        '--collect-all=pathspec',
+        '--noconfirm',
+    ])
+</file>
+
+<file path="MANIFEST.in">
+include README.md
+include LICENSE
+recursive-include onesource *
+exclude install.bat
+exclude install.ps1
+exclude release.py
+exclude make_exe.py
+</file>
+
+<file path="README.md">
+# OneSource ⚡
+
+> **The Local-First Project Packer for AI Context.**
+>
+> 🚫 **Escape the Node.js ecosystem.** No `npm install`. No file uploads.
+> 🚀 **Just download and run.** (Or `pip install` if you prefer).
+
+[![PyPI version](https://img.shields.io/pypi/v/onesource-cli.svg)](https://pypi.org/project/onesource-cli/)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+
+![OneSource Demo](OneSource_demo.gif)
+
+**OneSource** aggregates your entire project into a single, context-rich text file (or clipboard) for LLMs like Claude, ChatGPT, and Gemini.
+
+It bridges the gap between **Windows users** who want a simple `.exe` and **Python developers** who want a native CLI tool.
+
+---
+
+## 🥊 Why OneSource? (vs The Rest)
+
+| Feature | **OneSource** ⚡ | **Repomix** (Repopack) | **Gitingest** | **code2prompt** |
+| :--- | :--- | :--- | :--- | :--- |
+| **No Node.js Required** | ✅ **YES** (Standalone EXE) | ❌ No (Need NPM) | ✅ Yes (Web) | ✅ Yes (Rust) |
+| **Local Privacy** | ✅ **100% Local** | ✅ Local | ❌ **Uploads/Git Push needed** | ✅ Local |
+| **Windows Friendly** | ✅ **Native .exe** | ❌ Complex setup | ✅ Web browser | ⚠️ CLI focused |
+| **Edit/Extend** | ✅ **Simple Python** | ❌ TypeScript | ❌ Web Service | ❌ Rust (Harder to mod) |
+| **Clipboard Auto-Copy**| ✅ **Built-in** | ✅ Yes | ❌ Manual copy | ✅ Yes |
+
+* **vs Repomix:** Stop installing 200MB of `node_modules` just to pack a text file. OneSource is lightweight.
+* **vs Gitingest:** Don't push your private secrets or messy WIP code to GitHub just to analyze it. OneSource works on your *local* disk, offline.
+* **vs code2prompt:** Easier for Python developers to customize and integrate into their own scripts.
+
+---
+
+## 📥 Installation
+
+Select your platform below to see the instructions.
+
+<details>
+<summary><strong>🪟 Windows Users - Packed up exe (Click to expand)</strong></summary>
+
+We offer two ways to install OneSource on Windows. Choose the one that fits your style.
+
+#### Option 1: The Network Installer (PowerShell) - Recommended
+*Best for most users. Installs the latest version and adds it to PATH via one command.*
+
+Open **PowerShell** and paste the following:
+
+```powershell
+irm https://raw.githubusercontent.com/TW-RF54732/OneSource/main/install.ps1 | iex
+```
+
+#### Option 2: The Portable EXE
+
+*Best for USB drives or temporary use.*
+
+1. Download the standalone `OneSource.exe` from the **[Releases Page](https://github.com/TW-RF54732/OneSource/releases)**.
+2. Place it anywhere (e.g., inside your project folder).
+3. Run it directly via terminal: `.\OneSource.exe`
+
+</details>
+
+<details>
+<summary><strong>🐍 Python Developers / Every OS - python pip cli tool (Click to expand)</strong></summary>
+
+If you have Python installed or want to integrate this into your CI/CD pipeline, use PyPI.
+
+**Installation:**
+
+```bash
+pip install onesource-cli
+
+```
+
+**Upgrade:**
+
+```bash
+pip install --upgrade onesource-cli
+
+```
+</details>
+
+## 🎮 Usage Scenarios
+
+Run these commands in your project root.
+
+### Scenario 1: The "Lazy" Mode (Bug Fixing) 🌟
+
+You broke the code. You need AI help NOW.
+This packs everything (respecting `.gitignore`) and copies it to your clipboard.
+
+```bash
+OneSource -c
+
+```
+
+*-> Ctrl+V into ChatGPT.*
+
+### Scenario 2: Focused Backend Work
+
+Don't confuse the AI with frontend assets. Only grab the Python logic.
+
+```bash
+OneSource -i "*.py" -c
+
+```
+
+### Scenario 3: "Will this fit in the context window?"
+
+Check token count before pasting.
+
+```bash
+OneSource -t --dry-run
+
+```
+
+### Scenario 4: Set It and Forget It
+
+Always exclude `tests/` and `legacy/` folders? Save your config.
+
+```bash
+OneSource -x "tests/**,legacy/**" --save
+
+```
+
+*Creates a hidden config file. Next time, just run `OneSource`.*
+
+---
+
+## 📖 Command Reference
+
+| Argument | Description | Default |
+| --- | --- | --- |
+| `path` | **(Positional)** Target project path. | Current folder (`.`) |
+| `-o`, `--output` | Output filename. | `allCode.txt` |
+| `-c`, `--copy` | **Auto-copy** result to clipboard. | `False` |
+| `-i`, `--include` | Only include files matching this pattern (Applied **AFTER** `.gitignore`). | All non-ignored files |
+| `-x`, `--exclude` | Extra patterns to ignore. **Wins over `-i**` if there is a conflict. | `None` |
+| `-t`, `--tokens` | Show token count (requires `tiktoken`). | `False` |
+| `--no-tree` | Disable the directory tree visualization at the top. | `False` |
+| `--max-size` | Skip files larger than this size (in KB). | `500` KB |
+| `--no-ignore` | **Unlock mode:** Force scan files even if listed in `.gitignore`. | `False` |
+| `--marker` | Custom XML tag for wrapping code (e.g., use `code` instead of `file`). | `file` |
+| `--dry-run` | Preview which files will be processed without writing/copying. | `False` |
+| `--save` | Save current flags as default config (`.onesourcerc`). | `False` |
+
+---
+
+*Built for Vibe Coding. Privacy First. Local First.*
+</file>
+
+<file path="release_notes.md">
+# v1.2.2
+
+## Update README
++gif demo
+</file>
+
+<file path="setup.py">
+from setuptools import setup, find_packages
+
+# Read README properly
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+setup(
+    name="onesource-cli",
+    version="1.2.2",
+    author="lolLeo",
+    author_email="leo173842558@gmail.com",
+    description="A vibe coding tool to aggregate project code for LLMs.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/TW-RF54732/OneSource",
+    packages=find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.8',
+    install_requires=[
+        "pathspec",
+        "pyperclip",
+        "tiktoken", 
+    ],
+    entry_points={
+        "console_scripts": [
+            "OneSource=onesource.main:main", 
+        ],
+    },
+)
+</file>
+
+<file path=".github/workflows/release.yml">
+name: Publish & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  pypi-publish:
+    name: Upload to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  build-and-release:
+    name: Build EXE & GitHub Release
+    runs-on: windows-latest
+    needs: pypi-publish
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install .
+          pip install pyinstaller
+
+      - name: Build EXE with PyInstaller
+        run: python make_exe.py
+
+      - name: Create Release & Upload Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/OneSource.exe
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+</file>
+
+<file path="onesource/main.py">
+import os
+import sys
+import shutil
+import argparse
+import json
+from pathlib import Path
+import pathspec
+import pyperclip
+
+# Optional: Precise Token Calculation
+try:
+    import tiktoken
+    import tiktoken_ext.openai_public 
+    HAS_TIKTOKEN = True
+except ImportError:
+    HAS_TIKTOKEN = False
+
+VERSION = "v1.2.2"
+
+# This BANNER will appear in --help and the Installer
+BANNER = rf"""
+==========================================================
+  ____  _   _ _____   ____   ___  _   _ ____   ____ _____ 
+ / __ \| \ | | ____| / ___| / _ \| | | |  _ \ / ___| ____|
+| |  | |  \| |  _|   \___ \| | | | | | | |_) | |   |  _|  
+| |__| | |\  | |___   ___) | |_| | |_| |  _ <| |___| |___ 
+ \____/|_| \_|_____| |____/ \___/ \___/|_| \_\\____|_____|
+                          
+ >> OneSource {VERSION} | The Local-First Vibe Coding Tool <<
+==========================================================
+"""
+
+CONFIG_FILE = ".onesourcerc"
+
+class OneSource:
+    def __init__(self):
+        self.args = self._parse_args()
+        self.root = Path(self.args.path).resolve()
+        # Resolve absolute path to prevent the output file from checking itself improperly
+        self.output_path = Path(self.args.output).resolve()
+        
+        self.spec = self._load_gitignore()
+        
+        # Build pathspecs for include/exclude
+        self.include_spec = self._build_pathspec(self.args.include)
+        self.exclude_spec = self._build_pathspec(self.args.exclude)
+        
+        self.encoder = None
+        if HAS_TIKTOKEN:
+            try:
+                self.encoder = tiktoken.get_encoding("cl100k_base")
+            except Exception as e:
+                # Keep silent in CLI
+                pass
+
+    def _build_pathspec(self, patterns_str):
+        if not patterns_str:
+            return None
+        patterns = [p.strip() for p in patterns_str.split(",") if p.strip()]
+        return pathspec.PathSpec.from_lines('gitwildmatch', patterns)
+
+    def _parse_args(self):
+        defaults = {}
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r") as f:
+                    defaults = json.load(f)
+            except: 
+                pass
+
+        # Setting description=BANNER here ensures it shows up when running --help
+        parser = argparse.ArgumentParser(
+            description=BANNER, 
+            formatter_class=argparse.RawDescriptionHelpFormatter
+        )
+        
+        parser.add_argument("path", nargs="?", default=defaults.get("path", "."), help="Target project path")
+        parser.add_argument("-o", "--output", default=defaults.get("output", "allCode.txt"), help="Output filename")
+        parser.add_argument("-i", "--include", default=defaults.get("include"), help="Include patterns (e.g., *.py,src/**/*.js)")
+        parser.add_argument("-x", "--exclude", default=defaults.get("exclude"), help="Exclude patterns (e.g., venv/,**/*.log)")
+        parser.add_argument("-m", "--marker", default=defaults.get("marker", "file"), help="Custom XML tag name (default: file)")
+        parser.add_argument("--no-tree", action="store_true", default=defaults.get("no_tree", False), help="Disable project structure tree")
+        parser.add_argument("--max-size", type=int, default=defaults.get("max_size", 500), help="Max file size (KB)")
+        parser.add_argument("--no-ignore", action="store_true", help="Ignore .gitignore rules")
+        parser.add_argument("--dry-run", action="store_true", help="Preview list without writing to disk")
+        parser.add_argument("-c", "--copy", action="store_true", help="Copy output to clipboard")
+        parser.add_argument("-t", "--tokens", action="store_true", help="Calculate token count")
+        parser.add_argument("--save", action="store_true", help="Save current arguments as default config")
+        
+        # Add a version flag
+        parser.add_argument("-v", "--version", action="version", version=f"OneSource {VERSION}")
+
+        args = parser.parse_args()
+
+        if args.save:
+            config_to_save = {
+                "output": args.output,
+                "include": args.include,
+                "exclude": args.exclude,
+                "marker": args.marker,
+                "no_tree": args.no_tree,
+                "max_size": args.max_size
+            }
+            with open(CONFIG_FILE, "w") as f:
+                json.dump(config_to_save, f, indent=4)
+            print(f"[*] Configuration saved to {CONFIG_FILE}")
+
+        return args
+
+    def _load_gitignore(self):
+        if self.args.no_ignore: 
+            return None
+        gi = self.root / ".gitignore"
+        if gi.exists():
+            try:
+                # Read gitignore with utf-8
+                content = gi.read_text(encoding="utf-8", errors="ignore")
+                return pathspec.PathSpec.from_lines('gitwildmatch', content.splitlines())
+            except Exception as e:
+                print(f"  ! Warning: Failed to read .gitignore: {e}")
+                return None
+        return None
+
+    def _is_binary(self, path: Path):
+        # Check for binary by attempting to read as UTF-8 first
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                f.read(1024)
+                return False
+        except UnicodeDecodeError:
+            return True # Truly binary or non-UTF-8
+        except Exception: 
+            return True # Other read errors, treat as binary
+
+    def _should_ignore(self, path: Path):
+        # Compare absolute paths
+        if path.is_symlink() or ".git" in path.parts or path == self.output_path: 
+            return True
+        
+        # Normalize path separators to forward slashes for pathspec compatibility
+        rel_path = str(path.relative_to(self.root)).replace('\\', '/')
+        
+        # Gitignore check
+        if self.spec and self.spec.match_file(rel_path): 
+            return True
+        
+        # Custom exclude check
+        if self.exclude_spec and self.exclude_spec.match_file(rel_path):
+            return True
+
+        if path.is_file():
+            # Custom include check
+            if self.include_spec and not self.include_spec.match_file(rel_path):
+                return True
+            
+            # Size and Binary check
+            if path.stat().st_size > self.args.max_size * 1024 or self._is_binary(path): 
+                return True
+                
+        return False
+
+    def _generate_tree(self, dir_path, prefix=""):
+        tree_str = ""
+        try:
+            entries = sorted([e for e in dir_path.iterdir() if not self._should_ignore(e)], 
+                            key=lambda x: (x.is_file(), x.name))
+        except PermissionError:
+            return f"{prefix}[Permission Denied]\n"
+
+        for i, entry in enumerate(entries):
+            is_last = (i == len(entries) - 1)
+            connector = "\\-- " if is_last else "|-- "
+            tree_str += f"{prefix}{connector}{entry.name}\n"
+            if entry.is_dir():
+                tree_str += self._generate_tree(entry, prefix + ("    " if is_last else "|   "))
+        return tree_str
+
+    def run(self):
+        # NOTE: BANNER is NOT printed here anymore to keep CLI output clean.
+        
+        mode_label = "[DRY RUN]" if self.args.dry_run else "[PROCESSING]"
+        print(f"{mode_label} Root: {self.root}")
+
+        valid_files = [p for p in self.root.rglob("*") if p.is_file() and not self._should_ignore(p)]
+        
+        project_tree = None
+        if not self.args.no_tree:
+            project_tree = f"{self.root.name}/\n{self._generate_tree(self.root)}"
+            print("\nProject Structure Preview:")
+            print("-" * 20)
+            print(project_tree)
+            print("-" * 20 + "\n")
+
+        total_tokens = 0
+        out_file = None
+        
+        if not self.args.dry_run:
+            out_file = open(self.output_path, "w", encoding="utf-8")
+            if project_tree:
+                out_file.write(f"<project_structure>\n{project_tree}</project_structure>\n\n")
+
+        marker = self.args.marker
+        for p in valid_files:
+            rel_path = str(p.relative_to(self.root)).replace('\\', '/')
+            try:
+                # Use utf-8 and replace errors to avoid crashing on weird characters
+                content = p.read_text(encoding="utf-8", errors="replace")
+                
+                if self.args.tokens and self.encoder:
+                    total_tokens += len(self.encoder.encode(content))
+                
+                if out_file:
+                    out_file.write(f'<{marker} path="{rel_path}">\n{content}\n</{marker}>\n\n')
+                
+                print(f"  + {rel_path}")
+            except Exception as e:
+                print(f"  ! Error reading {rel_path}: {e}")
+
+        if out_file: 
+            out_file.close()
+
+        print("\n" + "="*40)
+        print(f"Files Processed: {len(valid_files)}")
+        if self.args.tokens:
+            token_str = f"{total_tokens:,}" if self.encoder else "tiktoken error"
+            print(f"Total Tokens:    {token_str}")
+        
+        if not self.args.dry_run:
+            print(f"Output saved to: {self.output_path}")
+            if self.args.copy:
+                try:
+                    pyperclip.copy(self.output_path.read_text(encoding="utf-8"))
+                    print("Copied to clipboard.")
+                except Exception as e:
+                    print(f"Clipboard error: {e}")
+        print("="*40)
+
+def main():
+    OneSource().run()
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="onesource/__init__.py">
+
+</file>
+

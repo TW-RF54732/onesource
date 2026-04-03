@@ -1,0 +1,27 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="640" fill="#0D1117"/>
+  
+  <path d="M0 64H1280M0 128H1280M0 192H1280M0 256H1280M0 320H1280M0 384H1280M0 448H1280M0 512H1280M0 576H1280" stroke="#30363D" stroke-width="1"/>
+  <path d="M64 0V640M128 0V640M192 0V640M256 0V640M320 0V640M384 0V640M448 0V640M512 0V640M576 0V640" stroke="#30363D" stroke-width="1"/>
+
+  <g transform="translate(100, 120)">
+    <rect width="400" height="400" rx="40" fill="#161B22" stroke="#30363D" stroke-width="4"/>
+    <text x="200" y="220" font-family="Arial" font-size="24" fill="#8B949E" text-anchor="middle">[ PLACE LOGO HERE ]</text>
+  </g>
+
+  <g transform="translate(600, 240)">
+    <text y="0" font-family="sans-serif" font-weight="800" font-size="100" fill="#FFFFFF">OneSource</text>
+    
+    <text y="80" font-family="sans-serif" font-weight="400" font-size="42" fill="#8B949E">Local-First AI Context Packer</text>
+    
+    <g transform="translate(0, 160)">
+      <rect width="200" height="50" rx="25" fill="#238636"/>
+      <text x="100" y="32" font-family="sans-serif" font-weight="600" font-size="24" fill="#FFFFFF" text-anchor="middle">No Node.js</text>
+      
+      <rect x="220" width="180" height="50" rx="25" fill="#1F6FEB"/>
+      <text x="310" y="32" font-family="sans-serif" font-weight="600" font-size="24" fill="#FFFFFF" text-anchor="middle">100% Local</text>
+    </g>
+  </g>
+  
+  <rect y="632" width="1280" height="8" fill="#F0E050"/>
+</svg>
