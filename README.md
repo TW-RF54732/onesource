@@ -77,7 +77,6 @@ That's it. `onesource` will be available system-wide.
 
 ```powershell
 irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
-irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
 ```
 
 Installs the latest release and adds it to your PATH automatically. Restart your terminal after.
