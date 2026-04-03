@@ -1,7 +1,0 @@
-include README.md
-include LICENSE
-recursive-include onesource *
-exclude install.bat
-exclude install.ps1
-exclude release.py
-exclude make_exe.py
