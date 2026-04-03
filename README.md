@@ -208,10 +208,20 @@ Paste that into Claude, ChatGPT, or Gemini. The XML-style tags help the AI under
 
 This project started as a vibe-coded Python script. It's now a hand-written Rust binary that I actually understand (mostly). Here's what's next:
 
+## Roadmap
+
+**Phase 1: Core Foundation (Fixes & Must-Haves)**
+- [ ] Support hidden files — accurately read `.github/`, etc., while safely ignoring `.git/` , `.env`
 - [ ] Clipboard copy (`-c` flag) — write to clipboard instead of a file
 - [ ] Token counter — estimate how many tokens the output will use before you paste it
-- [ ] Custom XML marker — use `<code>` instead of `<file>` if you prefer
-- [ ] Better glob UX — smarter pattern matching and friendlier error messages
+
+**Phase 2: Advanced Workflows (The Differentiators)**
+- [ ] Multiple config profiles — switch settings instantly (e.g., `onesource --profile backend`)
+- [ ] Git Diff integration — incremental packing for modified files only, saving LLM context space
+
+**Phase 3: Ecosystem & Integrations**
+- [ ] Python bindings — import `onesource` directly in Python AI Agents or CI/CD pipelines
+- [ ] VSCode Extension — one-click context packing from the editor
 - [ ] More install options (Homebrew, Scoop, Cargo)
 
 If you have an idea or hit a bug, open an issue. I'm a student — I have time and I actually read them.
