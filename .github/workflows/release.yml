@@ -39,10 +39,9 @@ jobs:
       - name: Build Release
         run: cargo build --release --target ${{ matrix.target }}
 
-      # 針對 Windows 的改名與上傳
       - name: Prepare & Upload (Windows)
         if: matrix.os == 'windows-latest'
-        run: Rename-Item -Path "target\${{ matrix.target }}\release\${{ matrix.binary_name }}" -NewName "${{ matrix.release_name }}"
+        run: Move-Item -Path "target\${{ matrix.target }}\release\${{ matrix.binary_name }}" -Destination "${{ matrix.release_name }}"
       - uses: softprops/action-gh-release@v1
         if: matrix.os == 'windows-latest'
         with:
