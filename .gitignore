@@ -1,4 +1,10 @@
-__pycache__/
+/target
+allCode.txt
+.onesourcerc
+allCode.txt
+examples
+tasks.json
+.vscode__pycache__/
 *.py[cod]
 *$py.class
 

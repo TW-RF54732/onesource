@@ -1,0 +1,63 @@
+use globset::{Glob,GlobSet, GlobSetBuilder};
+use std::path::Path;
+pub struct FileFilter{
+    include:Option<GlobSet>,
+    exclude:Option<GlobSet>
+}
+impl FileFilter{
+    /// Determines whether a file path should be kept or discarded.
+    ///
+    /// # Priority Logic (Exclude-First)
+    /// 1. **Exclude first**: If the path matches `exclude`, it is DISCARDED immediately.
+    /// 2. **Include second**: If not excluded, the path must match `include` to be KEPT.
+    /// 3. **Default**: If `include` is `None` (*), all non-excluded paths are KEPT.
+    pub fn new(include:Option<&str>,exclude:Option<&str>)->Self{
+        Self { 
+            include:include.and_then(|the_str|{Self::build_set(the_str)}),
+            exclude:exclude.and_then(|the_str|{Self::build_set(the_str)})
+        }
+    }
+    fn build_set(patterns: &str) -> Option<GlobSet> {
+        // Use .gitignore logic
+        let mut builder = GlobSetBuilder::new();
+        let mut has_pattern = false;
+
+        for pattern in patterns.split(",") {
+            let p = pattern.trim().replace('\\', "/");
+            
+            if p.is_empty() { continue; }
+            let is_simple_name = !p.contains('/') && !p.contains('*') && !p.contains('.');
+
+            if is_simple_name {
+                builder.add(Glob::new(&format!("**/{}", p)).unwrap());
+                builder.add(Glob::new(&format!("**/{}/**", p)).unwrap());
+            } else {
+                let final_p = if p.ends_with('/') {
+                    format!("{}**", p) 
+                } else {
+                    p
+                };
+                builder.add(Glob::new(&final_p).unwrap());
+            }
+            has_pattern = true;
+        }
+
+        if has_pattern {
+            Some(builder.build().expect("GlobSet compile fail"))
+        } else {
+            None
+        }
+    }
+pub fn is_match(&self, path: &Path) -> bool {
+        if let Some(ref ex_set) = self.exclude {
+            if ex_set.is_match(path) {
+                return false; 
+            }
+        }
+
+        match &self.include {
+            Some(inc_set) => inc_set.is_match(path),
+            None => true,
+        }
+    }
+}
