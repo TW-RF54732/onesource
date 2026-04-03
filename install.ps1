@@ -1,5 +1,7 @@
 # onesource Network Installer
 # Run with: irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$ProgressPreference = 'SilentlyContinue'
 
 $Repo = "TW-RF54732/onesource"
 $InstallDir = "$env:LOCALAPPDATA\Programs\onesource"
