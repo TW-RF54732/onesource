@@ -1,185 +1,250 @@
-# OneSource ⚡
+# onesource
 
-> **The Local-First Project Packer for AI Context.**
->
-> 🚫 **Escape the Node.js ecosystem.** No `npm install`. No file uploads.
-> 🚀 **Just download and run.** (Or `pip install` if you prefer).
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Built with Rust](https://img.shields.io/badge/built%20with-Rust-orange?logo=rust)](https://www.rust-lang.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+[![GitHub Stars](https://img.shields.io/github/stars/TW-RF54732/onesource?style=social)](https://github.com/TW-RF54732/onesource/stargazers)
 
-[![PyPI version](https://img.shields.io/pypi/v/onesource-cli.svg)](https://pypi.org/project/onesource-cli/)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
-![Roadmap: Rust Rewrite](https://img.shields.io/badge/Roadmap-Rust%20Rewrite-orange?logo=rust)
+> Pack your entire project into a single context file — and paste it into your AI.  
+> No Node.js. No Python. No cloud. Just download and run.
 
-![OneSource Demo](OneSource_demo.gif)
+```
+$ onesource ./my-project
+my-project/
+├── src/
+│   ├── main.rs
+│   └── utils.rs
+└── Cargo.toml
 
-**OneSource** aggregates your entire project into a single, context-rich text file (or clipboard) for LLMs like Claude, ChatGPT, and Gemini.
-
-It bridges the gap between **Windows users** who want a simple `.exe` and **Python developers** who want a native CLI tool.
----
-## 🦀 The Rust Future (v2.0 Alpha)
-OneSource is currently being rewritten in Rust to provide:
-
-- Blazing Fast Speed: Near-instant processing for massive monorepos.
-
-- Zero Dependencies: A truly single-binary experience for all platforms.
-
-- Memory Safety: Guaranteed stability during deep directory recursion.
-- Highly optimized for multi-core scalability.
-
-Check out the `rust-dev` branch to see the progress!
+  + src/main.rs
+  + src/utils.rs
+  + Cargo.toml
+======File processing completed======
+Files Processed: 3
+Output saved to: /home/user/my-project/allCode.txt
+```
 
 ---
 
-## 🥊 Why OneSource? Comparison & Positioning
-We don't aim to be the most complex tool; we aim to be the one that stays out of your way.
+## The Story
 
-| Feature | **OneSource** ⚡ | **Repomix** | **Gitingest** | **code2prompt** |
-| --- | --- | --- | --- | --- |
-| **Setup Friction** | ✅ **Zero** (Single EXE) | ❌ High (Node.js) | ✅ Low (Web) | ⚠️ Med (Binary) |
-| **Local Privacy** | ✅ **100% Local** | ✅ Local | ❌ **Cloud-based** | ✅ Local |
-| **System Residue** | ✅ **Zero** (Delete = Gone) | ❌ `node_modules` | ✅ None | ✅ None |
-| **Setup Convenience** | ✅ Instant (one line pip/powershell commend) | ❌ High Friction (NPM) | ✅ Instant (Web) | ⚠️ Manual build from rust|
-| **Clipboard Copy** | ✅ **Built-in** | ✅ Yes | ❌ Manual | ✅ Yes |
+I'm a first-year CS student. I break things constantly and ask AI to fix them — that's basically my workflow.
 
-* **vs Repomix:** Stop installing 200MB of `node_modules` just to pack a text file. OneSource is truly lightweight.
-* **vs Gitingest:** Don't push your private secrets or messy WIP code to GitHub just to analyze it. OneSource works on your *local* disk, offline.
-* **vs code2prompt:** OneSource focuses on the **Windows native experience** and automated installation. While code2prompt is a solid Rust alternative, we prioritize "Zero-Friction" deployment for every developer.
+The problem: every time I wanted help from Claude or ChatGPT, I'd spend five minutes manually copying files, pasting them one by one, explaining the folder structure, forgetting a file, pasting again... Before the AI even saw my bug, I was already frustrated.
+
+So I built a quick Python script to dump everything into one file. It worked. I used it every day.
+
+Then I thought — *what if other people could use this?* I rewrote it in Rust. By hand. As a freshman. It killed brain cells I didn't know I had.
+
+Is this the most powerful tool of its kind? No. Tools like [code2prompt](https://github.com/mufeedvh/code2prompt) exist and they're great. But they assume you know what you're doing. `onesource` assumes you just want it to work.
+
+If you're a student, a beginner, or just someone who wants a dead-simple way to feed your project to an AI — this is for you.
+
 ---
 
-## 📥 Installation
+## Why onesource?
 
-Select your platform below to see the instructions.
+There are already a few tools that do this. Here's an honest comparison:
 
-<details>
-<summary><strong>🪟 Windows Users - Packed up exe (Click to expand)</strong></summary>
+| | **onesource** | **Repomix** | **Gitingest** | **code2prompt** |
+|---|---|---|---|---|
+| **Setup** | Download & run (one-line install) | Requires Node.js + npm | Web browser | Build from source |
+| **Privacy** | 100% local | 100% local | Your code goes to their server | 100% local |
+| **Dependencies** | Zero | `node_modules` (200MB+) | None (it's a website) | Zero |
+| **Uninstall** | Delete the file. Done. | Good luck with `node_modules` | N/A | Delete the file |
+| **Auto-install script** | Yes — one command for all platforms | No | No | No |
+| **Offline** | Yes | Yes | No | Yes |
 
-We offer two ways to install OneSource on Windows. Choose the one that fits your style.
+**vs Repomix:** It's a great tool, but I'm not installing a JavaScript runtime and 200MB of dependencies just to pack a text file.
 
-#### Option 1: The Network Installer (PowerShell) - Recommended
-*Best for most users. Installs the latest version and adds it to PATH via one command.*
+**vs Gitingest:** Pushing your private, half-broken WIP code to the cloud to analyze it feels wrong. Everything here stays on your machine.
 
-Open **PowerShell** and paste the following:
+**vs code2prompt:** This is the honest one — code2prompt is powerful and aims at the same problem. If you're comfortable with Rust toolchains and want advanced features, check it out. If you just want something that installs in one line and gets out of your way, stay here.
+
+---
+
+## Installation
+
+### macOS / Linux
+
+```bash
+curl -sSL https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.sh | bash
+```
+
+That's it. `onesource` will be available system-wide.
+
+### Windows (PowerShell)
 
 ```powershell
-irm https://raw.githubusercontent.com/TW-RF54732/OneSource/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
 ```
 
-#### Option 2: The Portable EXE
+Installs the latest release and adds it to your PATH automatically. Restart your terminal after.
 
-*Best for USB drives or temporary use.*
+### Portable Binary (no install)
 
-1. Download the standalone `OneSource.exe` from the **[Releases Page](https://github.com/TW-RF54732/OneSource/releases)**.
-2. Place it anywhere (e.g., inside your project folder).
-3. Run it directly via terminal: `.\OneSource.exe`
-
-</details>
-
-<details>
-<summary><strong>🐍 Python Developers / Every OS - python pip cli tool (Click to expand)</strong></summary>
-
-If you have Python installed or want to integrate this into your CI/CD pipeline, use PyPI.
-
-**Installation:**
+Don't want to install anything? Grab the binary from the [Releases page](https://github.com/TW-RF54732/onesource/releases), drop it in your project folder, and run it directly:
 
 ```bash
-pip install onesource-cli
-
-
+./onesource          # macOS / Linux
+.\onesource.exe      # Windows
 ```
-
-**Upgrade:**
-
-```bash
-pip install --upgrade onesource-cli
-
-
-```
-
-</details>
-
-## 🎮 Usage Scenarios
-
-Run these commands in your project root.
-
-### Scenario 1: The "Lazy" Mode (Bug Fixing) 🌟
-
-You broke the code. You need AI help NOW.
-This packs everything (respecting `.gitignore`) and copies it to your clipboard.
-
-```bash
-OneSource -c
-
-
-```
-
-*-> Ctrl+V into ChatGPT.*
-
-### Scenario 2: Focused Backend Work
-
-Don't confuse the AI with frontend assets. Only grab the Python logic.
-
-```bash
-OneSource -i "*.py" -c
-
-
-```
-
-### Scenario 3: "Will this fit in the context window?"
-
-Check token count before pasting.
-
-```bash
-OneSource -t --dry-run
-
-
-```
-
-### Scenario 4: Set It and Forget It
-
-Always exclude `tests/` and `legacy/` folders? Save your config.
-
-```bash
-OneSource -x "tests/**,legacy/**" --save
-
-
-```
-
-*Creates a hidden config file. Next time, just run `OneSource`.*
-
-### Scenario 5: "Smart Isolation" Mode (Separate Tree & Content) 🧠
-
-Want to see the full project structure (including docs and configs) to give AI context, but only feed it the actual Python code content to save tokens?
-
-```bash
-OneSource -i "*.py" -ti "*.py,*.md,*.json" -c
-
-
-```
-
-*Files processed: Only `.py`. Project Tree shown: `.py`, `.md`, and `.json`.*
 
 ---
 
-## 📖 Command Reference
+## Usage
 
-| Argument | Description | Default |
-| --- | --- | --- |
-| `path` | **(Positional)** Target project path. | Current folder (`.`) |
-| `-o`, `--output` | Output filename. | `allCode.txt` |
-| `-c`, `--copy` | **Auto-copy** result to clipboard. | `False` |
-| `-i`, `--include` | Only include files matching this pattern (Applied **AFTER** `.gitignore`). | All non-ignored files |
-| `-x`, `--exclude` | Extra patterns to ignore. **Wins over `-i**` if there is a conflict. | `None` |
-| `--no-ignore` | **Unlock mode:** Force scan files even if listed in `.gitignore`. | `False` |
-| `-ti`, `--tree-include` | Tree include patterns. **Triggers Independent Mode** (isolates tree from file filters). | `None` (Inherits `-i`) |
-| `-tx`, `--tree-exclude` | Tree exclude patterns. **Triggers Independent Mode** (isolates tree from file filters). | `None` (Inherits `-x`) |
-| `--tree-no-ignore` | Ignore `.gitignore` rules *only* for the project tree visualization. | `False` |
-| `-t`, `--tokens` | Show token count (requires `tiktoken`). | `False` |
-| `--no-tree` | Disable the directory tree visualization at the top. | `False` |
-| `--max-size` | Skip files larger than this size (in KB). | `500` KB |
-| `--marker` | Custom XML tag for wrapping code (e.g., use `code` instead of `file`). | `file` |
-| `--dry-run` | Preview which files will be processed without writing/copying. | `False` |
-| `--save` | Save current flags as default config (`.onesourcerc`). | `False` |
+Run `onesource` from inside your project directory:
+
+```bash
+onesource [PATH] [OPTIONS]
+```
+
+If you run it with no arguments, it scans the current directory, respects your `.gitignore`, and writes everything to `allCode.txt`.
+
+### Common workflows
+
+**Just pack everything and save to a file:**
+```bash
+onesource
+```
+
+**Only pack your Rust source files:**
+```bash
+onesource -i "*.rs"
+```
+
+**Exclude a folder:**
+```bash
+onesource -x "tests/,legacy/"
+```
+
+**Preview what will be packed without actually writing anything:**
+```bash
+onesource --dry-run
+```
+
+**Save your settings so you don't have to retype them:**
+```bash
+onesource -i "*.rs" -x "target/" --save
+# Next time, just run: onesource
+```
+
+**Show the directory tree separately from what gets packed:**  
+*(Good for giving AI the full structure context, but only sending it specific files)*
+```bash
+onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
+```
 
 ---
 
-*Built for Vibe Coding. Privacy First. Local First.*
+## All Options
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `path` | — | `.` (current dir) | Target directory to scan |
+| `--output` | `-o` | `allCode.txt` | Output file path |
+| `--include` | `-i` | all files | Only include files matching this glob pattern |
+| `--exclude` | `-x` | none | Exclude files matching this glob pattern. Wins over `--include` on conflict. |
+| `--no-ignore` | — | false | Ignore `.gitignore` rules and scan everything |
+| `--tree-include` | `--ti` | inherits `-i` | Glob filter for the directory tree (enables independent tree mode) |
+| `--tree-exclude` | `--tx` | inherits `-x` | Glob exclude for the directory tree |
+| `--tree-no-ignore` | — | false | Ignore `.gitignore` rules only for the tree view |
+| `--no-tree` | — | false | Disable the directory tree in output |
+| `--max-size` | `-m` | 500 (KB) | Skip files larger than this size |
+| `--dry-run` | — | false | Preview files that would be packed, without writing |
+| `--save` | — | false | Save current flags to `.onesourcerc` in the target directory |
+| `--no-config` | — | false | Ignore `.onesourcerc` and use only CLI flags |
+
+---
+
+## Configuration File
+
+Running with `--save` creates a `.onesourcerc` file in your project directory. Next time you run `onesource` there, it picks up your saved settings automatically.
+
+**Priority order:** CLI flags → `.onesourcerc` → defaults
+
+Example `.onesourcerc`:
+```json
+{
+  "output_path": "context.txt",
+  "include": "*.rs,*.toml",
+  "exclude": "target/",
+  "no_ignore": false,
+  "max_size": 300
+}
+```
+
+> Note: `path`, `--dry-run`, `--save`, and `--show-arg` are never saved to config — they're always passed as CLI arguments.
+
+---
+
+## What the output looks like
+
+```
+my-project/
+├── src/
+│   └── main.rs
+└── Cargo.toml
+
+<file path="src/main.rs">
+fn main() {
+    println!("Hello, world!");
+}
+</file>
+
+<file path="Cargo.toml">
+[package]
+name = "my-project"
+version = "0.1.0"
+</file>
+```
+
+Paste that into Claude, ChatGPT, or Gemini. The XML-style tags help the AI understand file boundaries clearly.
+
+---
+
+## Roadmap
+
+This project started as a vibe-coded Python script. It's now a hand-written Rust binary that I actually understand (mostly). Here's what's next:
+
+- [ ] Clipboard copy (`-c` flag) — write to clipboard instead of a file
+- [ ] Token counter — estimate how many tokens the output will use before you paste it
+- [ ] Custom XML marker — use `<code>` instead of `<file>` if you prefer
+- [ ] Better glob UX — smarter pattern matching and friendlier error messages
+- [ ] More install options (Homebrew, Scoop, Cargo)
+
+If you have an idea or hit a bug, open an issue. I'm a student — I have time and I actually read them.
+
+---
+
+## Contributing
+
+Pull requests are welcome. The codebase is small (~500 lines of Rust across 5 files) and not scary to navigate:
+
+```
+src/
+├── main.rs         # Entry point, arg resolution, main flow
+├── configs.rs      # CLI args + .onesourcerc config (clap + serde)
+├── filter_utils.rs # Glob-based include/exclude logic
+├── tree_utils.rs   # Directory tree builder and printer
+└── io_utils.rs     # MultiWriter (write to file + stdout simultaneously)
+```
+
+To build locally:
+```bash
+git clone https://github.com/TW-RF54732/onesource.git
+cd onesource
+cargo build --release
+```
+
+---
+
+## License
+
+MIT — do whatever you want with it.
+
+---
+
+*Made by a first-year student who got tired of copy-pasting files into ChatGPT.*  
+*If this saved you even five minutes, a star would mean a lot.*
