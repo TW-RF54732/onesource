@@ -1,8 +1,7 @@
 use ignore::WalkBuilder;
-use std::{fs::File, io::{BufWriter,Write},path::{self, Path}};
+use std::{fs::File, io::{BufWriter,Write}};
 use configs::{Args};
-use clap::{Arg, Parser};
-
+use clap::Parser;
 use crate::configs::AppConfig;
 
 mod tree_utils;
