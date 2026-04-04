@@ -8,22 +8,7 @@
 > Pack your entire project into a single context file — and paste it into your AI.  
 > No Node.js. No Python. No cloud. Just download and run.
 
-```
-$ onesource
-my-project/
-├── src/
-│   ├── main.rs
-│   └── utils.rs
-└── Cargo.toml
-
-  + src/main.rs
-  + src/utils.rs
-  + Cargo.toml
-======File processing completed======
-Files Processed: 3
-Output saved to: /home/user/my-project/my-project.onesource
-```
-
+![OneSource Demo](./medias/demo.gif)
 ---
 
 ## The Story
