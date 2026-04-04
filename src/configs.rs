@@ -117,10 +117,20 @@ impl Args {
         }
     }
     pub fn resolve(self) -> AppConfig {
+        let target_path = self.path.unwrap_or_else(|| PathBuf::from("."));
+        let final_output_path = self.output_path.unwrap_or_else(|| {
+            let folder_name = target_path.canonicalize()
+                .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
+                .file_name()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "project".to_string());
+            PathBuf::from(format!("{}.onesource", folder_name))
+        });
         AppConfig {
+
             // If None is encountered, the final preset value will be assigned.
-            path: self.path.unwrap_or_else(|| PathBuf::from(".")),
-            output_path: self.output_path.unwrap_or_else(|| PathBuf::from("allCode.txt")),
+            path: target_path,
+            output_path: final_output_path,
             no_ignore: self.no_ignore.unwrap_or(false),
             max_size: self.max_size.unwrap_or(500),
             no_tree: self.no_tree.unwrap_or(false),
