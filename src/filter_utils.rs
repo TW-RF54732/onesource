@@ -5,7 +5,8 @@ const BLACKLIST: &[&str] = &[
     //Not in .gitignore:
     ".git",
     ".gitignore",
-
+    //Self
+    ".onesourcerc",
     //Others
     ".svn",
     ".hg",
