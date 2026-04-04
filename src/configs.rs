@@ -65,6 +65,9 @@ pub struct Args {
     #[serde(skip)]
     #[arg(long, action = clap::ArgAction::SetTrue, help = "Ignore the .onesourcerc configuration file")]
     pub no_config: bool,
+
+    #[arg(long, action = clap::ArgAction::SetTrue, help = "Disable the hardcoded blacklist (e.g. .git/)")]
+    pub no_blacklist: Option<bool>,
 }
 
 #[derive(Debug)]
@@ -80,6 +83,7 @@ pub struct AppConfig {
     pub tree_no_ignore: bool,
     pub dry_run: bool,
     pub max_size: usize,
+    pub no_blacklist: bool,
 }
 
 impl Args {
@@ -101,6 +105,7 @@ impl Args {
             max_size: self.max_size.unwrap_or(500),
             no_tree: self.no_tree.unwrap_or(false),
             tree_no_ignore: self.tree_no_ignore.unwrap_or(false),
+            no_blacklist: self.no_blacklist.unwrap_or(false),
             
             // These are allowed to be empty (None means no filtering condition is set), so they are directly transferred.
             include: self.include,

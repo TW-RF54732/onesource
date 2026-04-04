@@ -13,11 +13,12 @@ mod configs;
 fn struct_tree<W: Write>(args:&AppConfig,writer: &mut W){
     let final_include = args.tree_include.as_deref().or(args.include.as_deref());
     let final_exclude = args.tree_exclude.as_deref().or(args.exclude.as_deref());
-    let filter = filter_utils::FileFilter::new(final_include, final_exclude);
+    let filter = filter_utils::FileFilter::new(final_include, final_exclude,args.no_blacklist);
     let mut tree_root = tree_utils::Node::new(true);
     
     let walker = WalkBuilder::new(&args.path)
         .standard_filters(!args.tree_no_ignore)
+        .hidden(false)
         .require_git(false)
         .build();
     
@@ -42,9 +43,10 @@ fn struct_tree<W: Write>(args:&AppConfig,writer: &mut W){
     tree_root.print("",writer).expect("Error at print tree");
 }
 fn rw_file<W: Write>(args:&AppConfig,writer:&mut W){
-    let filter = filter_utils::FileFilter::new(args.include.as_deref(), args.exclude.as_deref());
+    let filter = filter_utils::FileFilter::new(args.include.as_deref(), args.exclude.as_deref(),args.no_blacklist);
     let walker = WalkBuilder::new(&args.path)
         .standard_filters(!args.no_ignore)
+        .hidden(false)
         .require_git(false)
         .build();
     let mut count:u32 = 0;
@@ -113,6 +115,7 @@ fn main() {
     let config_path = base_path.join(".onesourcerc");
 
     // 2. Read the user input first then the saved configs
+    // This step should be in configs.rs in future.
     if !args.no_config {
         if let Some(config) = Args::read_config(&config_path) {
             println!(".onesourcerc found, using settings.");
@@ -125,16 +128,16 @@ fn main() {
             args.no_tree = args.no_tree.or(config.no_tree);
             args.tree_no_ignore = args.tree_no_ignore.or(config.tree_no_ignore);
             args.max_size = args.max_size.or(config.max_size);
+            args.no_blacklist = args.no_blacklist.or(config.no_blacklist);
             
             // NOTE: args.path, args.show_arg, args.save, args.dry_run NOT inherit by saved config
         } else {println!("No .onesourcerc found, use default settings.")}
     }
 
-    // 3. apply final settings.
-    
     
     // Debug: show all args
     let is_show_arg = args.show_arg.unwrap_or(false);
+    
     let is_save = args.save;   
     if is_save {
         if let Err(e) = args.save_config(&config_path) {
@@ -144,6 +147,7 @@ fn main() {
         }
     }
     
+    // 3. apply final settings.
     let app_config = args.resolve();
 
     
