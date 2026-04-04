@@ -4,7 +4,7 @@ use std::path::{PathBuf,Path};
 use std::fs;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "2.0.1")]
+#[command(name = "onesource", author = "lolLeo", version = "2.1.0")]
 pub struct Args {
     // File setting
     #[serde(skip)]
