@@ -118,12 +118,14 @@ impl Args {
     }
     pub fn resolve(self) -> AppConfig {
         let target_path = self.path.unwrap_or_else(|| PathBuf::from("."));
-        let final_output_path = self.output_path.unwrap_or_else(|| {
-            let folder_name = target_path.canonicalize()
-                .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
-                .file_name()
+        let final_output_path = self.output_path.unwrap_or_else(|| {// Why just read project folder name so complex??
+            let folder_name = target_path
+                .canonicalize()
+                .ok()
+                .and_then(|p| p.file_name().map(|n| n.to_os_string()))
                 .map(|s| s.to_string_lossy().to_string())
                 .unwrap_or_else(|| "project".to_string());
+                
             PathBuf::from(format!("{}.onesource", folder_name))
         });
         AppConfig {
