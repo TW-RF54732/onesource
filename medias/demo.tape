@@ -19,7 +19,7 @@ Sleep 800ms
 Enter
 Sleep 300ms
 
-Type "onesource ."
+Type "onesource"
 Sleep 400ms
 Enter
 Sleep 3s
@@ -33,7 +33,7 @@ Sleep 800ms
 Enter
 Sleep 300ms
 
-Type `onesource . -i "*.rs" -o rust_only.txt`
+Type `onesource -i "*.rs" -o rust_only.txt`
 Sleep 400ms
 Enter
 Sleep 3s
@@ -47,7 +47,7 @@ Sleep 800ms
 Enter
 Sleep 300ms
 
-Type "onesource . --dry-run"
+Type "onesource --dry-run"
 Sleep 400ms
 Enter
 Sleep 3s
@@ -61,12 +61,12 @@ Sleep 800ms
 Enter
 Sleep 300ms
 
-Type `onesource . -i "*.rs" -x "target/" --save`
+Type `onesource -i "*.rs" -x "target/" --save`
 Sleep 400ms
 Enter
 Sleep 2s
 
-Type "onesource ."
+Type "onesource"
 Sleep 400ms
 Enter
 Sleep 3s
