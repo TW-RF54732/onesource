@@ -117,21 +117,7 @@ fn main() {
     // 2. Read the user input first then the saved configs
     // This step should be in configs.rs in future.
     if !args.no_config {
-        if let Some(config) = Args::read_config(&config_path) {
-            println!(".onesourcerc found, using settings.");
-            args.output_path = args.output_path.or(config.output_path);
-            args.no_ignore = args.no_ignore.or(config.no_ignore);
-            args.include = args.include.or(config.include);
-            args.exclude = args.exclude.or(config.exclude);
-            args.tree_include = args.tree_include.or(config.tree_include);
-            args.tree_exclude = args.tree_exclude.or(config.tree_exclude);
-            args.no_tree = args.no_tree.or(config.no_tree);
-            args.tree_no_ignore = args.tree_no_ignore.or(config.tree_no_ignore);
-            args.max_size = args.max_size.or(config.max_size);
-            args.no_blacklist = args.no_blacklist.or(config.no_blacklist);
-            
-            // NOTE: args.path, args.show_arg, args.save, args.dry_run NOT inherit by saved config
-        } else {println!("No .onesourcerc found, use default settings.")}
+        args.merge_saved_config(&config_path);
     }
 
     
@@ -143,7 +129,7 @@ fn main() {
         if let Err(e) = args.save_config(&config_path) {
             eprintln!("WARNING: Fail to save configs ({})", e);
         } else {
-            println!("Save Successfully {}", config_path.display());
+            println!("Save Successfully at: {}", config_path.display());
         }
     }
     

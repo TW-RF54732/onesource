@@ -96,6 +96,26 @@ impl Args {
         fs::write(path, json_string)?;
         Ok(())
     }
+    pub fn merge_saved_config(&mut self, path: &Path) {
+        if self.no_config { return; }
+
+        if let Some(config) = Self::read_config(path) {
+            println!(".onesourcerc found, using settings.");
+            self.output_path = self.output_path.take().or(config.output_path);
+            self.no_ignore = self.no_ignore.take().or(config.no_ignore);
+            self.include = self.include.take().or(config.include);
+            self.exclude = self.exclude.take().or(config.exclude);
+            self.tree_include = self.tree_include.take().or(config.tree_include);
+            self.tree_exclude = self.tree_exclude.take().or(config.tree_exclude);
+            self.no_tree = self.no_tree.take().or(config.no_tree);
+            self.tree_no_ignore = self.tree_no_ignore.take().or(config.tree_no_ignore);
+            self.max_size = self.max_size.take().or(config.max_size);
+            self.no_blacklist = self.no_blacklist.take().or(config.no_blacklist);
+            // NOTE: args.path, args.show_arg, args.save, args.dry_run NOT inherit by saved config
+        } else {
+            println!("No .onesourcerc found, use default settings.");
+        }
+    }
     pub fn resolve(self) -> AppConfig {
         AppConfig {
             // If None is encountered, the final preset value will be assigned.
