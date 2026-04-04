@@ -211,6 +211,7 @@ This project started as a vibe-coded Python script. It's now a hand-written Rust
 ## Roadmap
 
 **Phase 1: Core Foundation (Fixes & Must-Haves)**
+- [x] Support hidden files — accurately read `.github/`, etc., while safely ignoring `.git/` , `.env`
 - [ ] Clipboard copy (`-c` flag) — write to clipboard instead of a file
 - [ ] Token counter — estimate how many tokens the output will use before you paste it
 
