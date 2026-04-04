@@ -115,7 +115,7 @@ fn main() {
     // 2. Read the user input first then the saved configs
     if !args.no_config {
         if let Some(config) = Args::read_config(&config_path) {
-            print!(".onesourcerc found, using settings.\n");
+            println!(".onesourcerc found, using settings.");
             args.output_path = args.output_path.or(config.output_path);
             args.no_ignore = args.no_ignore.or(config.no_ignore);
             args.include = args.include.or(config.include);
@@ -127,7 +127,7 @@ fn main() {
             args.max_size = args.max_size.or(config.max_size);
             
             // NOTE: args.path, args.show_arg, args.save, args.dry_run NOT inherit by saved config
-        } else {print!("No .onesourcerc found, use default settings.\n")}
+        } else {println!("No .onesourcerc found, use default settings.")}
     }
 
     // 3. apply final settings.
