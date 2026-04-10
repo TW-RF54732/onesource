@@ -8,22 +8,7 @@
 > Pack your entire project into a single context file — and paste it into your AI.  
 > No Node.js. No Python. No cloud. Just download and run.
 
-```
-$ onesource ./my-project
-my-project/
-├── src/
-│   ├── main.rs
-│   └── utils.rs
-└── Cargo.toml
-
-  + src/main.rs
-  + src/utils.rs
-  + Cargo.toml
-======File processing completed======
-Files Processed: 3
-Output saved to: /home/user/my-project/allCode.txt
-```
-
+![OneSource Demo](./medias/demo.gif)
 ---
 
 ## The Story
@@ -143,10 +128,11 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | Flag | Short | Default | Description |
 |---|---|---|---|
 | `path` | — | `.` (current dir) | Target directory to scan |
-| `--output` | `-o` | `allCode.txt` | Output file path |
+| `--output` | `-o` | `<folder-name>.onesource` | Output file path |
 | `--include` | `-i` | all files | Only include files matching this glob pattern |
 | `--exclude` | `-x` | none | Exclude files matching this glob pattern. Wins over `--include` on conflict. |
 | `--no-ignore` | — | false | Ignore `.gitignore` rules and scan everything |
+| `--no-blacklist` | — | false | Disable the safety blacklist (allows scanning `.git/`, `node_modules/`, etc.) |
 | `--tree-include` | `--ti` | inherits `-i` | Glob filter for the directory tree (enables independent tree mode) |
 | `--tree-exclude` | `--tx` | inherits `-x` | Glob exclude for the directory tree |
 | `--tree-no-ignore` | — | false | Ignore `.gitignore` rules only for the tree view |
@@ -202,16 +188,18 @@ version = "0.1.0"
 
 Paste that into Claude, ChatGPT, or Gemini. The XML-style tags help the AI understand file boundaries clearly.
 
+> **Tip:** Add `*.onesource` to your global `.gitignore` right now so you never accidentally commit an AI context file.
+
 ---
 
 ## Roadmap
 
 This project started as a vibe-coded Python script. It's now a hand-written Rust binary that I actually understand (mostly). Here's what's next:
 
-## Roadmap
-
 **Phase 1: Core Foundation (Fixes & Must-Haves)**
-- [x] Support hidden files — accurately read `.github/`, etc., while safely ignoring `.git/` , `.env`
+- [x] Hidden files support — correctly packs `.github/`, `.onesourcerc` while auto-blocking `.git/` or other file that hardcode in `filter_utils.rs`'s blacklist.
+- [x] Safety blacklist — hardcoded block for `.git`, `node_modules`, `__pycache__`, `target` so you can't nuke your context window by accident
+- [x] Smart output naming — output named after your project folder (`my-app.onesource` instead of `allCode.txt`)
 - [ ] Clipboard copy (`-c` flag) — write to clipboard instead of a file
 - [ ] Token counter — estimate how many tokens the output will use before you paste it
 
@@ -220,7 +208,7 @@ This project started as a vibe-coded Python script. It's now a hand-written Rust
 - [ ] Git Diff integration — incremental packing for modified files only, saving LLM context space
 
 **Phase 3: Ecosystem & Integrations**
-- [ ] Python bindings — import `onesource` directly in Python AI Agents or CI/CD pipelines
+- [ ] Python bindings — import `onesource` directly in Python AI agents or CI/CD pipelines
 - [ ] VSCode Extension — one-click context packing from the editor
 - [ ] More install options (Homebrew, Scoop, Cargo)
 
