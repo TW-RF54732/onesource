@@ -1,9 +1,9 @@
 # onesource
 
-[](https://www.google.com/search?q=LICENSE)
-[](https://www.rust-lang.org/)
-[](https://www.google.com/search?q=)
-[](https://github.com/TW-RF54732/onesource/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Built with Rust](https://img.shields.io/badge/built%20with-Rust-orange?logo=rust)](https://www.rust-lang.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+[![GitHub Stars](https://img.shields.io/github/stars/TW-RF54732/onesource?style=social)](https://github.com/TW-RF54732/onesource/stargazers)
 
 > 將你的整個專案打包成單一個上下文檔案 — 然後貼給你的 AI。  
 > 不需要 Node.js。不需要 Python。不需要雲端。只需下載並執行。
