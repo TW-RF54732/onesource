@@ -5,6 +5,8 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
 [![GitHub Stars](https://img.shields.io/github/stars/TW-RF54732/onesource?style=social)](https://github.com/TW-RF54732/onesource/stargazers)
 
+[English README 英文文檔](https://github.com/TW-RF54732/onesource/blob/683ce72337df6ef7ab3df7f7e37d8523344a14b2/README.md)
+
 > 將你的整個專案打包成單一個上下文檔案 — 然後貼給你的 AI。  
 > 不需要 Node.js。不需要 Python。不需要雲端。只需下載並執行。
 
