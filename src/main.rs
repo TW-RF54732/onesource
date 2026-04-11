@@ -113,8 +113,6 @@ fn main() {
     // 1. Get the user input and the configs.
     let base_path = args.path.as_deref().unwrap_or(std::path::Path::new("."));
     let config_path = base_path.join(".onesourcerc");
-
-    let copy = args.copy;
     
     // 2. Read the user input first then the saved configs
     // This step should be in configs.rs in future.
@@ -157,7 +155,7 @@ fn main() {
                                                                                 .display());
 
     } 
-    else if copy {
+    else if app_config.copy {
 
         let mut clipboard_writer = match io_utils::ClipboardWriter::new() {
             Ok(writer) => writer,
