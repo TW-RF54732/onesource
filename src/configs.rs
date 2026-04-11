@@ -151,6 +151,7 @@ impl Args {
             tree_include: self.tree_include,
             tree_exclude: self.tree_exclude,
             
+            copy: self.copy,
             dry_run: self.dry_run,
         }
     }
