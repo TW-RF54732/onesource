@@ -3,6 +3,7 @@ use std::{fs::File, io::{BufWriter,Write}};
 use configs::{Args};
 use clap::Parser;
 use crate::configs::AppConfig;
+use arboard::Clipboard;
 
 mod tree_utils;
 mod io_utils;
