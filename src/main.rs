@@ -1,8 +1,8 @@
 use ignore::WalkBuilder;
-use std::{fs::File, io::{BufWriter,Write}};
+use std::{fs::{File, copy}, io::{BufWriter,Write}};
 use configs::{Args};
 use clap::Parser;
-use crate::configs::AppConfig;
+use crate::{configs::AppConfig, io_utils::MultiWriter};
 use arboard::Clipboard;
 
 mod tree_utils;
@@ -115,6 +115,8 @@ fn main() {
     let base_path = args.path.as_deref().unwrap_or(std::path::Path::new("."));
     let config_path = base_path.join(".onesourcerc");
 
+    let copy = args.copy;
+    
     // 2. Read the user input first then the saved configs
     // This step should be in configs.rs in future.
     if !args.no_config {
@@ -155,7 +157,32 @@ fn main() {
                                                                                 .unwrap_or_else(|_| app_config.output_path.clone()) 
                                                                                 .display());
 
-    } else {
+    } 
+    else if copy {
+
+        let mut clipboard_writer = match io_utils::ClipboardWriter::new() {
+            Ok(writer) => writer,
+            Err(e) => {
+                eprintln!("[ERROR] Failed to initialize clipboard: {}", e);
+                eprintln!("Hint: Try running without -c flag to save to file instead");
+                std::process::exit(1);
+            }
+        };
+        if !app_config.no_tree {
+            let mut stdout = std::io::stdout();
+            let mut multi_writer = io_utils::tee(&mut clipboard_writer, &mut stdout);
+            struct_tree(&app_config, &mut multi_writer);
+        }
+        rw_file(&app_config, &mut clipboard_writer);
+
+        if let Err(e) = clipboard_writer.flush() {
+            eprintln!("[ERROR] Failed to copy to clipboard: {}", e);
+            std::process::exit(1);
+        }
+        
+        println!("Output copied to clipboard successfully!");
+    }
+    else {
         
         // Only not dry will creat file
         let file = File::create(&app_config.output_path).expect("Create output file failed");
@@ -176,7 +203,7 @@ fn main() {
                 }
 
         rw_file(&app_config, &mut writer);
-        
+
         writer.flush().expect("Flush failed");
         
         println!("Output saved to: {}", abs_path_display);

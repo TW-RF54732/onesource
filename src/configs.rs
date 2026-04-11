@@ -68,6 +68,10 @@ pub struct Args {
 
     #[arg(long, action = clap::ArgAction::SetTrue, help = "Disable the hardcoded blacklist (e.g. .git/)")]
     pub no_blacklist: Option<bool>,
+    
+    #[serde(skip)]
+    #[arg(long,short, action = clap::ArgAction::SetTrue, help = "Out put into clipboard. (no file)")]
+    pub copy: bool,
 }
 
 #[derive(Debug)]
