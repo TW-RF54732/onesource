@@ -116,7 +116,6 @@ impl Args {
             self.tree_no_ignore = self.tree_no_ignore.take().or(config.tree_no_ignore);
             self.max_size = self.max_size.take().or(config.max_size);
             self.no_blacklist = self.no_blacklist.take().or(config.no_blacklist);
-            self.copy = config.copy;//not in save but in AppConfigs
             // NOTE: args.path, args.show_arg, args.save, args.dry_run NOT inherit by saved config
         } else {
             println!("No .onesourcerc found, use default settings.");
