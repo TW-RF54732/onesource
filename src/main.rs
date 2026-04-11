@@ -1,9 +1,8 @@
 use ignore::WalkBuilder;
-use std::{fs::{File, copy}, io::{BufWriter,Write}};
+use std::{fs::File, io::{BufWriter,Write}};
 use configs::{Args};
 use clap::Parser;
-use crate::{configs::AppConfig, io_utils::MultiWriter};
-use arboard::Clipboard;
+use crate::configs::AppConfig;
 
 mod tree_utils;
 mod io_utils;
