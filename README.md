@@ -143,6 +143,7 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | `--dry-run` | — | false | Preview files that would be packed, without writing |
 | `--save` | — | false | Save current flags to `.onesourcerc` in the target directory |
 | `--no-config` | — | false | Ignore `.onesourcerc` and use only CLI flags |
+| `--copy` | `-c` | false | copy the result into clipboard. No file will be create or edit, don't work with dry run.|
 
 ---
 
