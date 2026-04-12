@@ -153,7 +153,9 @@ fn main() {
                                                                                 .map(|dir| dir.join(&app_config.output_path))
                                                                                 .unwrap_or_else(|_| app_config.output_path.clone()) 
                                                                                 .display());
-
+        if app_config.copy{
+            println!("[WARNING] NO COPY WAS MADE WHILE DRY RUN")
+        }
     } 
     else if app_config.copy {
 
