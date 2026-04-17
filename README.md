@@ -203,7 +203,7 @@ This project started as a vibe-coded Python script. It's now a hand-written Rust
 - [x] Hidden files support — correctly packs `.github/`, `.onesourcerc` while auto-blocking `.git/` or other file that hardcode in `filter_utils.rs`'s blacklist.
 - [x] Safety blacklist — hardcoded block for `.git`, `node_modules`, `__pycache__`, `target` so you can't nuke your context window by accident
 - [x] Smart output naming — output named after your project folder (`my-app.onesource` instead of `allCode.txt`)
-- [ ] Clipboard copy (`-c` flag) — write to clipboard instead of a file
+- [X] Clipboard copy (`-c` flag) — write to clipboard instead of a file
 - [ ] Token counter — estimate how many tokens the output will use before you paste it
 
 **Phase 2: Advanced Workflows (The Differentiators)**
