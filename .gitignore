@@ -27,6 +27,6 @@ allCode.txt
 .vscode/
 .idea/
 
-release.py
+# release.py
 target/
 *.onesource
