@@ -3,11 +3,18 @@ use std::{fs::File, io::{BufWriter,Write}};
 use configs::{Args};
 use clap::Parser;
 use crate::configs::AppConfig;
+use tiktoken_rs::cl100k_base;
 
 mod tree_utils;
 mod io_utils;
 mod filter_utils;
 mod configs;
+
+#[derive(Debug, Default)]
+struct FileStats {
+    file_count: u32,
+    total_tokens: usize,
+}
 
 
 fn struct_tree<W: Write>(args:&AppConfig,writer: &mut W){
@@ -42,14 +49,16 @@ fn struct_tree<W: Write>(args:&AppConfig,writer: &mut W){
     writeln!(writer,"{}/", root_name).expect("Write root failed");
     tree_root.print("",writer).expect("Error at print tree");
 }
-fn rw_file<W: Write>(args:&AppConfig,writer:&mut W){
+fn rw_file<W: Write>(args:&AppConfig,writer:&mut W) -> FileStats {
+    let bpe = cl100k_base().expect("Failed to load tokenizer");
     let filter = filter_utils::FileFilter::new(args.include.as_deref(), args.exclude.as_deref(),args.no_blacklist);
     let walker = WalkBuilder::new(&args.path)
         .standard_filters(!args.no_ignore)
         .hidden(false)
         .require_git(false)
         .build();
-    let mut count:u32 = 0;
+    let mut stats = FileStats::default();
+    
     for result in walker{
         match result {
             Ok(entry)=>{
@@ -70,17 +79,32 @@ fn rw_file<W: Write>(args:&AppConfig,writer:&mut W){
                     };
                     if !is_text_file { continue; }
                     if args.dry_run {
-                        println!("[EXPECT] {}", rel_path.display());
-                        count += 1;
+                        // In dry run mode, read the file to calculate tokens but don't write output
+                        if let Ok(bytes) = std::fs::read(entry.path()) {
+                            let content = String::from_utf8_lossy(&bytes);
+                            let tokens = bpe.encode_with_special_tokens(&content);
+                            let token_count = tokens.len();
+                            stats.total_tokens += token_count;
+                            println!("[EXPECT] {} ({} tokens)", rel_path.display(), token_count);
+                        } else {
+                            println!("[EXPECT] {}", rel_path.display());
+                        }
+                        stats.file_count += 1;
                         continue;
                     }
                     if let Ok(bytes) = std::fs::read(entry.path()) {
                         let content = String::from_utf8_lossy(&bytes);
+                        
+                        // Calculate tokens for this file
+                        let tokens = bpe.encode_with_special_tokens(&content);
+                        let token_count = tokens.len();
+                        stats.total_tokens += token_count;
+                        
                         writeln!(writer, "<file path=\"{}\">", rel_path.display()).unwrap();
                         writeln!(writer, "{}", content).unwrap();
                         writeln!(writer, "</file>\n").unwrap();
-                        println!("  + {}",rel_path.display());
-                        count += 1;
+                        println!("  + {} ({} tokens)",rel_path.display(), token_count);
+                        stats.file_count += 1;
                     }
                 }
             }
@@ -93,7 +117,10 @@ fn rw_file<W: Write>(args:&AppConfig,writer:&mut W){
         writer.flush().expect("last input flush fail");
     }
     println!("======File processing completed======");
-    println!("Files Processed: {}",count);
+    println!("Files Processed: {}", stats.file_count);
+    println!("Total Tokens: {}", stats.total_tokens);
+    
+    stats
 }
 
 

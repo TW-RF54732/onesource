@@ -49,7 +49,7 @@ impl Write for ClipboardWriter{
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.buffer.extend_from_slice(buf);
         Ok(buf.len())
-    }
+    }   
     fn flush(&mut self) -> std::io::Result<()> {
         self.copy_to_clipboard()
     }
