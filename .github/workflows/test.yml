@@ -38,7 +38,7 @@ jobs:
           
           echo ">>> 2. Testing Profile Save (Default)"
           ./target/debug/onesource -i "*.rs" -x "target/" --save
-          if [ ! -f .onesourcerc ]; then echo "Error: .onesourcerc not created"; exit 1; f
+          if [ ! -f .onesourcerc ]; then echo "Error: .onesourcerc not created"; exit 1; fi
           grep -q "default" .onesourcerc
           grep -q "*.rs" .onesourcerc
           
