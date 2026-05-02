@@ -1,9 +1,10 @@
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{PathBuf, Path};
-use std::fs;
-use anyhow::{Context, Result, anyhow};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 #[command(name = "onesource", author = "lolLeo", version = "3.0.0")]
@@ -18,38 +19,79 @@ pub struct Args {
     pub output_path: Option<PathBuf>,
 
     // Content setting
-    #[arg(long, action = clap::ArgAction::Set, num_args = 0..=1, default_missing_value = "true", require_equals = true, help = "Ignore .gitignore rules when scanning file content")]
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Ignore .gitignore rules when scanning file content"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub no_ignore: Option<bool>,
 
-    #[arg(short, long, help = "Comma-separated list of patterns to include (gitignore syntax, e.g. '*.rs,src/')")]
+    #[arg(
+        short,
+        long,
+        help = "Comma-separated list of patterns to include (gitignore syntax, e.g. '*.rs,src/')"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub include: Option<String>,
 
-    #[arg(short = 'x', long, help = "Comma-separated list of patterns to exclude (gitignore syntax, e.g. 'target/,*.log')")]
+    #[arg(
+        short = 'x',
+        long,
+        help = "Comma-separated list of patterns to exclude (gitignore syntax, e.g. 'target/,*.log')"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exclude: Option<String>,
 
     // Tree setting
-    #[arg(long, visible_alias = "ti", help = "Custom include patterns for tree view (overrides global include)")]
+    #[arg(
+        long,
+        visible_alias = "ti",
+        help = "Custom include patterns for tree view (overrides global include)"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tree_include: Option<String>,
 
-    #[arg(long, visible_alias = "tx", help = "Custom exclude patterns for tree view (overrides global exclude)")]
+    #[arg(
+        long,
+        visible_alias = "tx",
+        help = "Custom exclude patterns for tree view (overrides global exclude)"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tree_exclude: Option<String>,
 
-    #[arg(long, action = clap::ArgAction::Set, num_args = 0..=1, default_missing_value = "true", require_equals = true, help = "Disable the directory tree visualization")]
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Disable the directory tree visualization"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub no_tree: Option<bool>,
 
-    #[arg(long, action = clap::ArgAction::Set, num_args = 0..=1, default_missing_value = "true", require_equals = true, help = "Ignore .gitignore rules specifically for the tree view")]
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Ignore .gitignore rules specifically for the tree view"
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tree_no_ignore: Option<bool>,
 
     // Behavior setting
     #[serde(skip)]
-    #[arg(long, action = clap::ArgAction::SetTrue, help = "Preview mode: List files without generating the output file")]
+    #[arg(
+        long,
+        action = clap::ArgAction::SetTrue,
+        help = "Preview mode: List files without generating the output file"
+    )]
     pub dry_run: bool,
 
     #[arg(short, long, help = "Max file size in KB")]
@@ -57,22 +99,47 @@ pub struct Args {
     pub max_size: Option<usize>,
 
     #[serde(skip)]
-    #[arg(long, action = clap::ArgAction::Set, num_args = 0..=1, default_missing_value = "true", require_equals = true, help = "Show all argument (DEBUG)")]
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Show all argument (DEBUG)"
+    )]
     pub show_arg: Option<bool>,
 
     #[serde(skip)]
-    #[arg(long, default_missing_value = "default", num_args = 0..=1, help = "Save all argument into .onesourcerc (JSON) under specified profile")]
+    #[arg(
+        long,
+        default_missing_value = "default",
+        num_args = 0..=1,
+        help = "Save all argument into .onesourcerc (JSON) under specified profile"
+    )]
     pub save: Option<String>,
 
     #[serde(skip)]
-    #[arg(long, action = clap::ArgAction::SetTrue, help = "Ignore the .onesourcerc configuration file")]
+    #[arg(
+        long,
+        action = clap::ArgAction::SetTrue,
+        help = "Ignore the .onesourcerc configuration file"
+    )]
     pub no_config: bool,
 
-    #[arg(long, action = clap::ArgAction::SetTrue, help = "Disable the hardcoded blacklist (e.g. .git/)")]
+    #[arg(
+        long,
+        action = clap::ArgAction::SetTrue,
+        help = "Disable the hardcoded blacklist (e.g. .git/)"
+    )]
     pub no_blacklist: Option<bool>,
-    
+
     #[serde(skip)]
-    #[arg(long, short, action = clap::ArgAction::SetTrue, help = "Output into clipboard. (no file)")]
+    #[arg(
+        long,
+        short,
+        action = clap::ArgAction::SetTrue,
+        help = "Output into clipboard. (no file)"
+    )]
     pub copy: bool,
 
     #[arg(short, long, help = "Load a specific profile")]
@@ -157,7 +224,7 @@ impl Args {
 
         let content = fs::read_to_string(path)
             .with_context(|| format!("Failed to read config file: {}", path.display()))?;
-        
+
         // Try parsing new format first
         if let Ok(config) = serde_json::from_str::<ConfigDocument>(&content) {
             return Ok(Some(config));
@@ -180,13 +247,12 @@ impl Args {
 
     pub fn save_config<P: AsRef<Path>>(&self, path: P, profile_name: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut config_doc = Self::read_config(path)?
-            .unwrap_or_else(|| ConfigDocument {
-                profiles: HashMap::new(),
-            });
+        let mut config_doc = Self::read_config(path)?.unwrap_or_else(|| ConfigDocument {
+            profiles: HashMap::new(),
+        });
 
         let profile = ProfileConfig {
-            description: None, 
+            description: None,
             output_path: self.output_path.clone(),
             no_ignore: self.no_ignore,
             include: self.include.clone(),
@@ -205,7 +271,8 @@ impl Args {
             final_profile.description = existing.description.clone();
         }
 
-        config_doc.profiles.insert(profile_name.to_string(), final_profile);
+        config_doc.profiles
+            .insert(profile_name.to_string(), final_profile);
 
         let json_string = serde_json::to_string_pretty(&config_doc)
             .context("Failed to serialize configuration to JSON")?;
@@ -215,10 +282,12 @@ impl Args {
     }
 
     pub fn merge_saved_config(&mut self, path: &Path) -> Result<()> {
-        if self.no_config { return Ok(()); }
+        if self.no_config {
+            return Ok(());
+        }
 
         let profile_name = self.profile.as_deref().unwrap_or("default");
-        
+
         match Self::read_config(path)? {
             Some(config_doc) => {
                 if let Some(profile) = config_doc.profiles.get(profile_name) {
@@ -227,8 +296,10 @@ impl Args {
                     self.no_ignore = self.no_ignore.take().or(profile.no_ignore);
                     self.include = self.include.take().or_else(|| profile.include.clone());
                     self.exclude = self.exclude.take().or_else(|| profile.exclude.clone());
-                    self.tree_include = self.tree_include.take().or_else(|| profile.tree_include.clone());
-                    self.tree_exclude = self.tree_exclude.take().or_else(|| profile.tree_exclude.clone());
+                    self.tree_include =
+                        self.tree_include.take().or_else(|| profile.tree_include.clone());
+                    self.tree_exclude =
+                        self.tree_exclude.take().or_else(|| profile.tree_exclude.clone());
                     self.no_tree = self.no_tree.take().or(profile.no_tree);
                     self.tree_no_ignore = self.tree_no_ignore.take().or(profile.tree_no_ignore);
                     self.max_size = self.max_size.take().or(profile.max_size);
@@ -241,7 +312,10 @@ impl Args {
             }
             None => {
                 if self.profile.is_some() {
-                    return Err(anyhow!(".onesourcerc not found, but profile '{}' was requested.", profile_name));
+                    return Err(anyhow!(
+                        ".onesourcerc not found, but profile '{}' was requested.",
+                        profile_name
+                    ));
                 }
             }
         }
@@ -257,7 +331,7 @@ impl Args {
                 .and_then(|p| p.file_name().map(|n| n.to_os_string()))
                 .map(|s| s.to_string_lossy().to_string())
                 .unwrap_or_else(|| "project".to_string());
-                
+
             PathBuf::from(format!("{}.onesource", folder_name))
         });
         AppConfig {
