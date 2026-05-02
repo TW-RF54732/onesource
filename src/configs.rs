@@ -247,9 +247,15 @@ impl Args {
 
     pub fn save_config<P: AsRef<Path>>(&self, path: P, profile_name: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut config_doc = Self::read_config(path)?.unwrap_or_else(|| ConfigDocument {
-            profiles: HashMap::new(),
-        });
+        
+        // Try to read existing config, but if it's invalid (e.g. old format), 
+        // we just start with a fresh one instead of failing.
+        let mut config_doc = match Self::read_config(path) {
+            Ok(Some(doc)) => doc,
+            _ => ConfigDocument {
+                profiles: HashMap::new(),
+            },
+        };
 
         let profile = ProfileConfig {
             description: None,

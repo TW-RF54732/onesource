@@ -66,11 +66,13 @@ jobs:
           echo '{"include": "*.rs", "max_size": 100}' > .onesourcerc
           # Expecting exit code 1 and specific error message
           ./target/debug/onesource --dry-run 2>&1 | grep -q "Incompatible configuration format detected" || (echo "Legacy compatibility test failed"; exit 1)
+          # Cleanup bad config to avoid blocking next steps
+          rm .onesourcerc
           
           echo ">>> 9. Testing Missing Profile Error"
           # Reset to a valid new format first
           ./target/debug/onesource -i "*.rs" --save
-          ./target/debug/onesource -p non_existent 2>&1 | grep -q "WARNING"
+          ./target/debug/onesource -p non_existent 2>&1 | grep -q "not found"
           
           echo ">>> 10. Testing Token Counter & File Filtering"
           ./target/debug/onesource -i "src/main.rs" --dry-run | grep -q "Total Tokens:"
