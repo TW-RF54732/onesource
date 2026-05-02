@@ -127,44 +127,56 @@ fn rw_file<W: Write>(args:&AppConfig,writer:&mut W) -> FileStats {
 fn main() {
     let mut args = Args::parse();
     
-    /*
-    Args priority :
-    User input -> saves -> default
-    
-    Args usage:
-    configs::Args -> use for user input.
-    configs::AppConfig -> final config after all config, input logics that functions read.
-    */
+    // 1. Handle subcommands early
+    if let Some(command) = &args.command {
+        match command {
+            configs::Commands::Profile { subcommand } => {
+                match subcommand {
+                    configs::ProfileSubcommands::Ls { json } => {
+                        let base_path = args.path.as_deref().unwrap_or(std::path::Path::new("."));
+                        let config_path = base_path.join(".onesourcerc");
+                        
+                        if let Some(config_doc) = Args::read_config(&config_path) {
+                            if *json {
+                                println!("{}", serde_json::to_string_pretty(&config_doc.profiles).unwrap());
+                            } else {
+                                println!("Available profiles in {}:", config_path.display());
+                                for (name, profile) in &config_doc.profiles {
+                                    let desc = profile.description.as_deref().unwrap_or("No description");
+                                    println!("  - {:<15} : {}", name, desc);
+                                }
+                            }
+                        } else {
+                            eprintln!("No .onesourcerc found or invalid format.");
+                            std::process::exit(1);
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+    }
 
-    // Args logic
-    // 1. Get the user input and the configs.
+    // 2. Regular execution flow
     let base_path = args.path.as_deref().unwrap_or(std::path::Path::new("."));
     let config_path = base_path.join(".onesourcerc");
     
-    // 2. Read the user input first then the saved configs
-    // This step should be in configs.rs in future.
     if !args.no_config {
         args.merge_saved_config(&config_path);
     }
 
-    
-    // Debug: show all args
     let is_show_arg = args.show_arg.unwrap_or(false);
     
-    let is_save = args.save;   
-    if is_save {
-        if let Err(e) = args.save_config(&config_path) {
+    if let Some(profile_name) = &args.save {
+        if let Err(e) = args.save_config(&config_path, profile_name) {
             eprintln!("WARNING: Fail to save configs ({})", e);
         } else {
-            println!("Save Successfully at: {}", config_path.display());
+            println!("Save Successfully to profile '{}' at: {}", profile_name, config_path.display());
         }
     }
     
-    // 3. apply final settings.
     let app_config = args.resolve();
 
-    
-    //Start proccess
     if app_config.dry_run {
         println!("\n[DRY RUN MODE] Previews only, no files will be written.\n");
         

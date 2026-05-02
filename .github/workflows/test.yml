@@ -1,0 +1,78 @@
+name: Full Integration & Feature Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  comprehensive-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Linting & Formatting Check
+        run: |
+          cargo fmt --all -- --check
+          # We ignore some warnings for now to focus on logic, but ensure no critical clippy errors
+          cargo clippy -- -D warnings
+
+      - name: Build Debug Binary
+        run: cargo build
+
+      - name: Run All Unit Tests
+        run: cargo test
+
+      - name: Integration Test Suite
+        run: |
+          set -e # Exit on any failure
+          
+          echo ">>> 1. Testing Default Packaging (Basic Flow)"
+          ./target/debug/onesource --dry-run
+          
+          echo ">>> 2. Testing Profile Save (Default)"
+          ./target/debug/onesource -i "*.rs" -x "target/" --save
+          if [ ! -f .onesourcerc ]; then echo "Error: .onesourcerc not created"; exit 1; f
+          grep -q "default" .onesourcerc
+          grep -q "*.rs" .onesourcerc
+          
+          echo ">>> 3. Testing Profile Save (Named: 'backend')"
+          ./target/debug/onesource -i "src/backend/*" --save backend
+          grep -q "backend" .onesourcerc
+          grep -q "src/backend/\*" .onesourcerc
+          
+          echo ">>> 4. Testing Profile Loading (-p backend)"
+          # We check if it correctly identifies the profile in stdout
+          ./target/debug/onesource -p backend --dry-run | grep -q "using profile: backend"
+          
+          echo ">>> 5. Testing CLI Override Priority (CLI > Profile)"
+          # Profile backend has include "src/backend/*", we override via CLI to "*.toml"
+          ./target/debug/onesource -p backend -i "*.toml" --dry-run | grep -q "Cargo.toml"
+          
+          echo ">>> 6. Testing Profile List (Human Readable)"
+          ./target/debug/onesource profile ls | grep -q "backend"
+          
+          echo ">>> 7. Testing Profile List (JSON for Agents)"
+          ./target/debug/onesource profile ls --json | jq '.' | grep -q "backend"
+          
+          echo ">>> 8. Testing Backward Compatibility Warning"
+          # Create a legacy flat config
+          echo '{"include": "*.rs", "max_size": 100}' > .onesourcerc
+          # Expecting exit code 1 and specific error message
+          ./target/debug/onesource --dry-run 2>&1 | grep -q "Incompatible configuration format detected" || (echo "Legacy compatibility test failed"; exit 1)
+          
+          echo ">>> 9. Testing Missing Profile Error"
+          # Reset to a valid new format first
+          ./target/debug/onesource -i "*.rs" --save
+          ./target/debug/onesource -p non_existent 2>&1 | grep -q "WARNING"
+          
+          echo ">>> 10. Testing Token Counter & File Filtering"
+          ./target/debug/onesource -i "src/main.rs" --dry-run | grep -q "Total Tokens:"
+          
+          echo ">>> ALL INTEGRATION TESTS PASSED <<<"
