@@ -111,10 +111,15 @@ onesource -x "tests/,legacy/"
 onesource --dry-run
 ```
 
-**Save your settings so you don't have to retype them:**
+**Save your settings to a specific profile:**
 ```bash
-onesource -i "*.rs" -x "target/" --save
-# Next time, just run: onesource
+onesource -i "*.rs" -x "target/" --save backend
+# Next time, just run: onesource -p backend
+```
+
+**List all saved profiles:**
+```bash
+onesource profile ls
 ```
 
 **Show the directory tree separately from what gets packed:**  
@@ -131,9 +136,10 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 |---|---|---|---|
 | `path` | — | `.` (current dir) | Target directory to scan |
 | `--output` | `-o` | `<folder-name>.onesource` | Output file path |
+| `--profile` | `-p` | `default` | Load a specific configuration profile |
 | `--include` | `-i` | all files | Only include files matching this glob pattern |
 | `--exclude` | `-x` | none | Exclude files matching this glob pattern. Wins over `--include` on conflict. |
-| `--no-ignore` | — | false | Ignore `.gitignore` rules and scan everything |
+| `--no-ignore` | — | false | Ignore `.gitignore` rules when scanning file content |
 | `--no-blacklist` | — | false | Disable the safety blacklist (allows scanning `.git/`, `node_modules/`, etc.) |
 | `--tree-include` | `--ti` | inherits `-i` | Glob filter for the directory tree (enables independent tree mode) |
 | `--tree-exclude` | `--tx` | inherits `-x` | Glob exclude for the directory tree |
@@ -141,7 +147,7 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | `--no-tree` | — | false | Disable the directory tree in output |
 | `--max-size` | `-m` | 500 (KB) | Skip files larger than this size |
 | `--dry-run` | — | false | Preview files that would be packed, without writing |
-| `--save` | — | false | Save current flags to `.onesourcerc` in the target directory |
+| `--save` | — | `default` | Save current flags to specified profile in `.onesourcerc` |
 | `--no-config` | — | false | Ignore `.onesourcerc` and use only CLI flags |
 | `--copy` | `-c` | false | copy the result into clipboard. No file will be create or edit, don't work with dry run.|
 
@@ -149,18 +155,24 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 
 ## Configuration File
 
-Running with `--save` creates a `.onesourcerc` file in your project directory. Next time you run `onesource` there, it picks up your saved settings automatically.
+Running with `--save [NAME]` creates or updates a `.onesourcerc` file in your project directory. This file supports multiple **Profiles**, allowing you to switch between different contexts (e.g., backend, frontend, tests) instantly.
 
-**Priority order:** CLI flags → `.onesourcerc` → defaults
+**Priority order:** CLI flags → Chosen Profile → Defaults
 
 Example `.onesourcerc`:
 ```json
 {
-  "output_path": "context.txt",
-  "include": "*.rs,*.toml",
-  "exclude": "target/",
-  "no_ignore": false,
-  "max_size": 300
+  "profiles": {
+    "default": {
+      "include": "*.rs,*.toml",
+      "exclude": "target/",
+      "max_size": 300
+    },
+    "backend": {
+      "description": "Focus on backend logic",
+      "include": "src/backend/*,Cargo.toml"
+    }
+  }
 }
 ```
 

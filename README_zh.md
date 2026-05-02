@@ -128,11 +128,17 @@ onesource -x "tests/,legacy/"
 onesource --dry-run
 ```
 
-**儲存你的設定，這樣就不用重新輸入：**
+**將設定儲存到指定的 Profile：**
 
 ```bash
-onesource -i "*.rs" -x "target/" --save
-# 下次只需執行： onesource
+onesource -i "*.rs" -x "target/" --save backend
+# 下次只需執行： onesource -p backend
+```
+
+**列出所有已儲存的 Profile：**
+
+```bash
+onesource profile ls
 ```
 
 **將目錄結構樹與打包內容分開顯示：**  
@@ -150,37 +156,45 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 |---|---|---|---|
 | `path` | — | `.` (當前目錄) | 要掃描的目標目錄 |
 | `--output` | `-o` | `{project name}.onesource` | 輸出檔案路徑 |
+| `--profile` | `-p` | `default` | 載入指定的設定 Profile |
 | `--include` | `-i` | 所有檔案 | 只包含符合此 glob 模式的檔案 |
 | `--exclude` | `-x` | 無 | 排除符合此 glob 模式的檔案。衝突時優先於 `--include`。 |
 | `--no-ignore` | — | false | 忽略 `.gitignore` 規則並掃描所有內容 |
+| `--no-blacklist` | — | false | 停用安全性黑名單 (允許掃描 `.git/`, `node_modules/` 等) |
 | `--tree-include` | `--ti` | 繼承 `-i` | 用於目錄樹的 Glob 過濾器 (啟用獨立的樹狀圖模式) |
 | `--tree-exclude` | `--tx` | 繼承 `-x` | 用於目錄樹的 Glob 排除器 |
 | `--tree-no-ignore` | — | false | 僅在樹狀檢視中忽略 `.gitignore` 規則 |
 | `--no-tree` | — | false | 在輸出中停用目錄結構樹 |
 | `--max-size` | `-m` | 500 (KB) | 跳過大於此大小的檔案 |
 | `--dry-run` | — | false | 預覽將被打包的檔案，但不寫入 |
-| `--save` | — | false | 將當前標籤儲存到目標目錄的 `.onesourcerc` 中 |
-| `--no-config` | — | false | 忽略 `.onesourcerc`，只使用 CLI 標籤 |
-| `--copy` | `-c` | false | 直接複製輸出至剪貼簿(不會有任何檔案被創建或複寫)|
+| `--save` | — | `default` | 將當前參數儲存到 `.onesourcerc` 中的指定 Profile |
+| `--no-config` | — | false | 忽略 `.onesourcerc`，只使用 CLI 參數 |
+| `--copy` | `-c` | false | 直接複製輸出至剪貼簿 (不會有任何檔案被創建或寫入) |
 
 
 -----
 
 ## 設定檔 (Configuration File)
 
-加上 `--save` 執行會在你的專案目錄中建立一個 `.onesourcerc` 檔案。下次你在該處執行 `onesource` 時，它會自動讀取你儲存的設定。
+加上 `--save [名稱]` 執行會在你的專案目錄中建立或更新 `.onesourcerc` 檔案。這個檔案現在支援多個 **Profiles**，讓你可以針對不同情境（如後端、前端、測試）瞬間切換設定。
 
-**優先順序：** CLI 參數 → `.onesourcerc` → 預設值
+**優先順序：** CLI 參數 → 指定的 Profile → 內部預設值
 
 範例 `.onesourcerc`：
 
 ```json
 {
-  "output_path": "context.txt",
-  "include": "*.rs,*.toml",
-  "exclude": "target/",
-  "no_ignore": false,
-  "max_size": 300
+  "profiles": {
+    "default": {
+      "include": "*.rs,*.toml",
+      "exclude": "target/",
+      "max_size": 300
+    },
+    "backend": {
+      "description": "專注於後端邏輯",
+      "include": "src/backend/*,Cargo.toml"
+    }
+  }
 }
 ```
 
