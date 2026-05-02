@@ -34,7 +34,10 @@ fn generate_tree<W: Write>(args: &AppConfig, writer: &mut W) -> Result<()> {
     for result in walker {
         match result {
             Ok(entry) => {
-                let rel_path = entry.path().strip_prefix(&args.path).unwrap_or(entry.path());
+                let rel_path = entry
+                    .path()
+                    .strip_prefix(&args.path)
+                    .unwrap_or(entry.path());
                 if !filter.is_match(rel_path) {
                     continue;
                 }
@@ -77,7 +80,10 @@ fn process_files<W: Write>(args: &AppConfig, writer: &mut W) -> Result<FileStats
     for result in walker {
         match result {
             Ok(entry) => {
-                let rel_path = entry.path().strip_prefix(&args.path).unwrap_or(entry.path());
+                let rel_path = entry
+                    .path()
+                    .strip_prefix(&args.path)
+                    .unwrap_or(entry.path());
                 if !filter.is_match(rel_path) {
                     continue;
                 }

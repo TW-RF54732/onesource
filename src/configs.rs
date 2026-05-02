@@ -271,7 +271,8 @@ impl Args {
             final_profile.description = existing.description.clone();
         }
 
-        config_doc.profiles
+        config_doc
+            .profiles
             .insert(profile_name.to_string(), final_profile);
 
         let json_string = serde_json::to_string_pretty(&config_doc)
@@ -292,20 +293,30 @@ impl Args {
             Some(config_doc) => {
                 if let Some(profile) = config_doc.profiles.get(profile_name) {
                     println!(".onesourcerc found, using profile: {}", profile_name);
-                    self.output_path = self.output_path.take().or_else(|| profile.output_path.clone());
+                    self.output_path = self
+                        .output_path
+                        .take()
+                        .or_else(|| profile.output_path.clone());
                     self.no_ignore = self.no_ignore.take().or(profile.no_ignore);
                     self.include = self.include.take().or_else(|| profile.include.clone());
                     self.exclude = self.exclude.take().or_else(|| profile.exclude.clone());
-                    self.tree_include =
-                        self.tree_include.take().or_else(|| profile.tree_include.clone());
-                    self.tree_exclude =
-                        self.tree_exclude.take().or_else(|| profile.tree_exclude.clone());
+                    self.tree_include = self
+                        .tree_include
+                        .take()
+                        .or_else(|| profile.tree_include.clone());
+                    self.tree_exclude = self
+                        .tree_exclude
+                        .take()
+                        .or_else(|| profile.tree_exclude.clone());
                     self.no_tree = self.no_tree.take().or(profile.no_tree);
                     self.tree_no_ignore = self.tree_no_ignore.take().or(profile.tree_no_ignore);
                     self.max_size = self.max_size.take().or(profile.max_size);
                     self.no_blacklist = self.no_blacklist.take().or(profile.no_blacklist);
                 } else if self.profile.is_some() {
-                    return Err(anyhow!("Profile '{}' not found in .onesourcerc", profile_name));
+                    return Err(anyhow!(
+                        "Profile '{}' not found in .onesourcerc",
+                        profile_name
+                    ));
                 } else {
                     println!("No 'default' profile in .onesourcerc, using CLI defaults.");
                 }
