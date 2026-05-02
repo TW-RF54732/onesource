@@ -87,7 +87,7 @@ Run `onesource` from inside your project directory:
 onesource [PATH] [OPTIONS]
 ```
 
-If you run it with no arguments, it scans the current directory, respects your `.gitignore`, and writes everything to `allCode.txt`.
+If you run it with no arguments, it scans the current directory, respects your `.gitignore`, and writes everything to `{project name}.onesource`.
 
 ### Common workflows
 
@@ -202,7 +202,7 @@ This project started as a vibe-coded Python script. It's now a hand-written Rust
 **Phase 1: Core Foundation (Fixes & Must-Haves)**
 - [x] Hidden files support — correctly packs `.github/`, `.onesourcerc` while auto-blocking `.git/` or other file that hardcode in `filter_utils.rs`'s blacklist.
 - [x] Safety blacklist — hardcoded block for `.git`, `node_modules`, `__pycache__`, `target` so you can't nuke your context window by accident
-- [x] Smart output naming — output named after your project folder (`my-app.onesource` instead of `allCode.txt`)
+- [x] Smart output naming — output named after your project folder (`my-app.onesource` instead of `{project name}.onesource`)
 - [X] Clipboard copy (`-c` flag) — write to clipboard instead of a file
 - [x] Token counter — estimate how many tokens the output will use before you paste it
 

@@ -23,7 +23,7 @@ my-project/
   + Cargo.toml
 ======File processing completed======
 Files Processed: 3
-Output saved to: /home/user/my-project/allCode.txt
+Output saved to: /home/user/my-project/{project name}.onesource
 ```
 
 -----
@@ -100,7 +100,7 @@ irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | ie
 onesource [PATH] [OPTIONS]
 ```
 
-如果你不帶任何參數執行它，它會掃描當前目錄，遵守你的 `.gitignore` 規則，並將所有內容寫入 `allCode.txt`。
+如果你不帶任何參數執行它，它會掃描當前目錄，遵守你的 `.gitignore` 規則，並將所有內容寫入 `{project name}.onesource`。
 
 ### 常見工作流程
 
@@ -149,7 +149,7 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | 標籤 (Flag) | 縮寫 (Short) | 預設值 (Default) | 描述 (Description) |
 |---|---|---|---|
 | `path` | — | `.` (當前目錄) | 要掃描的目標目錄 |
-| `--output` | `-o` | `allCode.txt` | 輸出檔案路徑 |
+| `--output` | `-o` | `{project name}.onesource` | 輸出檔案路徑 |
 | `--include` | `-i` | 所有檔案 | 只包含符合此 glob 模式的檔案 |
 | `--exclude` | `-x` | 無 | 排除符合此 glob 模式的檔案。衝突時優先於 `--include`。 |
 | `--no-ignore` | — | false | 忽略 `.gitignore` 規則並掃描所有內容 |
