@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{PathBuf, Path};
 use std::fs;
+use anyhow::{Context, Result, anyhow};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 #[command(name = "onesource", author = "lolLeo", version = "3.0.0")]
@@ -148,33 +149,44 @@ pub struct AppConfig {
 }
 
 impl Args {
-    pub fn read_config<P: AsRef<Path>>(path: P) -> Option<ConfigDocument> {
-        let content = fs::read_to_string(path).ok()?;
+    pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Option<ConfigDocument>> {
+        let path = path.as_ref();
+        if !path.exists() {
+            return Ok(None);
+        }
+
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read config file: {}", path.display()))?;
         
         // Try parsing new format first
         if let Ok(config) = serde_json::from_str::<ConfigDocument>(&content) {
-            return Some(config);
+            return Ok(Some(config));
         }
 
         // Try parsing old format to provide migration warning
         if let Ok(_old_config) = serde_json::from_str::<ProfileConfig>(&content) {
-            eprintln!("\n[ERROR] Incompatible configuration format detected.");
-            eprintln!("The .onesourcerc file uses an old format. Profiles are now required.");
-            eprintln!("Please delete or migrate your .onesourcerc to the new structure:");
-            eprintln!("{{\n  \"profiles\": {{\n    \"default\": {{ ... }}\n  }}\n}}");
-            std::process::exit(1);
+            let msg = format!(
+                "\n[ERROR] Incompatible configuration format detected in {}.\n\
+                The .onesourcerc file uses an old format. Profiles are now required.\n\
+                Please delete or migrate your .onesourcerc to the new structure:\n\
+                {{\n  \"profiles\": {{\n    \"default\": {{ ... }}\n  }}\n}}",
+                path.display()
+            );
+            return Err(anyhow!(msg));
         }
 
-        None
+        Ok(None)
     }
 
-    pub fn save_config<P: AsRef<Path>>(&self, path: P, profile_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let mut config_doc = Self::read_config(&path).unwrap_or_else(|| ConfigDocument {
-            profiles: HashMap::new(),
-        });
+    pub fn save_config<P: AsRef<Path>>(&self, path: P, profile_name: &str) -> Result<()> {
+        let path = path.as_ref();
+        let mut config_doc = Self::read_config(path)?
+            .unwrap_or_else(|| ConfigDocument {
+                profiles: HashMap::new(),
+            });
 
         let profile = ProfileConfig {
-            description: None, // Keep existing description if we were updating, but for now we just create/overwrite fields
+            description: None, 
             output_path: self.output_path.clone(),
             no_ignore: self.no_ignore,
             include: self.include.clone(),
@@ -187,7 +199,7 @@ impl Args {
             no_blacklist: self.no_blacklist,
         };
 
-        // If updating an existing profile, we might want to preserve the description.
+        // If updating an existing profile, preserve the description.
         let mut final_profile = profile;
         if let Some(existing) = config_doc.profiles.get(profile_name) {
             final_profile.description = existing.description.clone();
@@ -195,40 +207,45 @@ impl Args {
 
         config_doc.profiles.insert(profile_name.to_string(), final_profile);
 
-        let json_string = serde_json::to_string_pretty(&config_doc)?;
-        fs::write(path, json_string)?;
+        let json_string = serde_json::to_string_pretty(&config_doc)
+            .context("Failed to serialize configuration to JSON")?;
+        fs::write(path, json_string)
+            .with_context(|| format!("Failed to write config file: {}", path.display()))?;
         Ok(())
     }
 
-    pub fn merge_saved_config(&mut self, path: &Path) {
-        if self.no_config { return; }
+    pub fn merge_saved_config(&mut self, path: &Path) -> Result<()> {
+        if self.no_config { return Ok(()); }
 
         let profile_name = self.profile.as_deref().unwrap_or("default");
         
-        if let Some(config_doc) = Self::read_config(path) {
-            if let Some(profile) = config_doc.profiles.get(profile_name) {
-                println!(".onesourcerc found, using profile: {}", profile_name);
-                self.output_path = self.output_path.take().or(profile.output_path.clone());
-                self.no_ignore = self.no_ignore.take().or(profile.no_ignore);
-                self.include = self.include.take().or(profile.include.clone());
-                self.exclude = self.exclude.take().or(profile.exclude.clone());
-                self.tree_include = self.tree_include.take().or(profile.tree_include.clone());
-                self.tree_exclude = self.tree_exclude.take().or(profile.tree_exclude.clone());
-                self.no_tree = self.no_tree.take().or(profile.no_tree);
-                self.tree_no_ignore = self.tree_no_ignore.take().or(profile.tree_no_ignore);
-                self.max_size = self.max_size.take().or(profile.max_size);
-                self.no_blacklist = self.no_blacklist.take().or(profile.no_blacklist);
-            } else if self.profile.is_some() {
-                eprintln!("[WARNING] Profile '{}' not found in .onesourcerc. Using default settings.", profile_name);
-            } else {
-                 println!("No 'default' profile in .onesourcerc, using CLI defaults.");
+        match Self::read_config(path)? {
+            Some(config_doc) => {
+                if let Some(profile) = config_doc.profiles.get(profile_name) {
+                    println!(".onesourcerc found, using profile: {}", profile_name);
+                    self.output_path = self.output_path.take().or_else(|| profile.output_path.clone());
+                    self.no_ignore = self.no_ignore.take().or(profile.no_ignore);
+                    self.include = self.include.take().or_else(|| profile.include.clone());
+                    self.exclude = self.exclude.take().or_else(|| profile.exclude.clone());
+                    self.tree_include = self.tree_include.take().or_else(|| profile.tree_include.clone());
+                    self.tree_exclude = self.tree_exclude.take().or_else(|| profile.tree_exclude.clone());
+                    self.no_tree = self.no_tree.take().or(profile.no_tree);
+                    self.tree_no_ignore = self.tree_no_ignore.take().or(profile.tree_no_ignore);
+                    self.max_size = self.max_size.take().or(profile.max_size);
+                    self.no_blacklist = self.no_blacklist.take().or(profile.no_blacklist);
+                } else if self.profile.is_some() {
+                    return Err(anyhow!("Profile '{}' not found in .onesourcerc", profile_name));
+                } else {
+                    println!("No 'default' profile in .onesourcerc, using CLI defaults.");
+                }
             }
-        } else if self.profile.is_some() {
-             eprintln!("[ERROR] .onesourcerc not found, but profile '{}' was requested.", profile_name);
-             std::process::exit(1);
-        } else {
-            // No config file and no profile requested - this is fine, just use defaults.
+            None => {
+                if self.profile.is_some() {
+                    return Err(anyhow!(".onesourcerc not found, but profile '{}' was requested.", profile_name));
+                }
+            }
         }
+        Ok(())
     }
 
     pub fn resolve(self) -> AppConfig {
