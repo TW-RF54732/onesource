@@ -247,8 +247,8 @@ impl Args {
 
     pub fn save_config<P: AsRef<Path>>(&self, path: P, profile_name: &str) -> Result<()> {
         let path = path.as_ref();
-        
-        // Try to read existing config, but if it's invalid (e.g. old format), 
+
+        // Try to read existing config, but if it's invalid (e.g. old format),
         // we just start with a fresh one instead of failing.
         let mut config_doc = match Self::read_config(path) {
             Ok(Some(doc)) => doc,

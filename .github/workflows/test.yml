@@ -49,11 +49,11 @@ jobs:
           
           echo ">>> 4. Testing Profile Loading (-p backend)"
           # We check if it correctly identifies the profile in stdout
-          ./target/debug/onesource -p backend --dry-run | grep -q "using profile: backend"
+          ./target/debug/onesource -p backend --dry-run | grep "using profile: backend"
           
           echo ">>> 5. Testing CLI Override Priority (CLI > Profile)"
           # Profile backend has include "src/backend/*", we override via CLI to "*.toml"
-          ./target/debug/onesource -p backend -i "*.toml" --dry-run | grep -q "Cargo.toml"
+          ./target/debug/onesource -p backend -i "*.toml" --dry-run | grep "Cargo.toml"
           
           echo ">>> 6. Testing Profile List (Human Readable)"
           ./target/debug/onesource profile ls | grep -q "backend"
