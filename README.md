@@ -15,7 +15,7 @@
 
 ## The Story
 
-I'm a first-year CS student. I break things constantly and ask AI to fix them — that's basically my workflow.
+I'm a first-year IM student. I break things constantly and ask AI to fix them — that's basically my workflow.
 
 The problem: every time I wanted help from Claude or ChatGPT, I'd spend five minutes manually copying files, pasting them one by one, explaining the folder structure, forgetting a file, pasting again... Before the AI even saw my bug, I was already frustrated.
 
