@@ -6,7 +6,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/TW-RF54732/onesource?style=social)](https://github.com/TW-RF54732/onesource/stargazers)
 
 
-[中文文檔 Chinese README](https://github.com/TW-RF54732/onesource/blob/75be7d7d17a3797c7c251ae4265fbc734ce2e508/README_zh.md)
+[中文文檔 Chinese README](https://github.com/TW-RF54732/onesource/blob/main/README_zh.md)
 > Pack your entire project into a single context file — and paste it into your AI.  
 > No Node.js. No Python. No cloud. Just download and run.
 
