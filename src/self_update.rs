@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -10,9 +11,20 @@ pub fn run() -> Result<()> {
     let current_exe = env::current_exe().context("Failed to locate current executable")?;
     let temp_path = temp_download_path(&current_exe)?;
     let asset_name = asset_name()?;
+    let current_version = env!("CARGO_PKG_VERSION");
 
     println!("Fetching latest release info from GitHub...");
     println!("Target: {}", current_exe.display());
+    println!("Current version: {}", current_version);
+
+    let latest_version = fetch_latest_version()?;
+    println!("Latest version:  {}", latest_version);
+
+    if !version_is_newer(&latest_version, current_version) {
+        println!("Already up to date.");
+        return Ok(());
+    }
+
     println!("Asset:  {}", asset_name);
 
     download_latest_asset(asset_name, &temp_path)?;
@@ -31,6 +43,77 @@ pub fn run() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(windows)]
+fn fetch_latest_version() -> Result<String> {
+    let script = format!(
+        r#"
+$ErrorActionPreference = 'Stop'
+$release = Invoke-RestMethod -Uri 'https://api.github.com/repos/{repo}/releases/latest'
+$release.tag_name
+"#,
+        repo = REPO,
+    );
+
+    let output = Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            &script,
+        ])
+        .output()
+        .context("PowerShell failed to fetch the latest release")?;
+
+    parse_command_output(output, "PowerShell failed to fetch the latest release")
+}
+
+#[cfg(not(windows))]
+fn fetch_latest_version() -> Result<String> {
+    let api = format!("https://api.github.com/repos/{}/releases/latest", REPO);
+    let script = format!(
+        "curl -fsSL '{}' | grep '\"tag_name\"' | cut -d '\"' -f 4 | head -n 1",
+        shell_quote(&api),
+    );
+
+    let output = Command::new("sh")
+        .args(["-c", &script])
+        .output()
+        .context("curl failed to fetch the latest release")?;
+
+    parse_command_output(output, "curl failed to fetch the latest release")
+}
+
+fn parse_command_output(output: std::process::Output, error_context: &str) -> Result<String> {
+    if !output.status.success() {
+        return Err(anyhow!("{} (exit code: {})", error_context, output.status));
+    }
+
+    let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if value.is_empty() {
+        Err(anyhow!("{} returned an empty response", error_context))
+    } else {
+        Ok(value)
+    }
+}
+
+fn version_is_newer(latest: &str, current: &str) -> bool {
+    match (parse_version(latest), parse_version(current)) {
+        (Some(latest), Some(current)) => latest.cmp(&current) == Ordering::Greater,
+        _ => normalize_version(latest) != normalize_version(current),
+    }
+}
+
+fn parse_version(value: &str) -> Option<Vec<u64>> {
+    let normalized = normalize_version(value);
+    let stable = normalized.split_once('-').map_or(normalized, |(v, _)| v);
+    stable.split('.').map(|part| part.parse().ok()).collect()
+}
+
+fn normalize_version(value: &str) -> &str {
+    value.trim().trim_start_matches('v').trim_start_matches('V')
 }
 
 fn temp_download_path(current_exe: &Path) -> Result<PathBuf> {
@@ -107,7 +190,8 @@ fn replace_after_exit(target: &Path, downloaded: &Path) -> Result<()> {
     let script = format!(
         r#"
 $ErrorActionPreference = 'Stop'
-Wait-Process -Id {pid}
+$process = Get-Process -Id {pid} -ErrorAction SilentlyContinue
+if ($process) {{ Wait-Process -Id {pid} }}
 Move-Item -Force -LiteralPath '{downloaded}' -Destination '{target}'
 "#,
         pid = pid,
@@ -188,5 +272,13 @@ mod tests {
             .unwrap()
             .to_string_lossy()
             .starts_with("onesource-update-"));
+    }
+
+    #[test]
+    fn version_compare_detects_newer_versions() {
+        assert!(version_is_newer("v3.3.1", "3.3.0"));
+        assert!(version_is_newer("4.0.0", "3.9.9"));
+        assert!(!version_is_newer("v3.3.0", "3.3.0"));
+        assert!(!version_is_newer("3.2.9", "3.3.0"));
     }
 }

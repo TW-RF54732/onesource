@@ -8,7 +8,7 @@ use clap::{ArgMatches, Args as ClapArgs, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "3.3.0")]
+#[command(name = "onesource", author = "lolLeo", version = "3.3.1")]
 pub struct Args {
     // File setting
     #[serde(skip)]
