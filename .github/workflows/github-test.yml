@@ -72,6 +72,7 @@ jobs:
           ./target/debug/onesource profile list | grep "desc_test" | grep -q "Updated Desc"
 
           echo ">>> 13. Testing Profile Show, Merge Save, Replace Save"
+          ./target/debug/onesource profile create backend -i "src/backend/*"
           ./target/debug/onesource profile show backend | grep -q "Profile: backend"
           ./target/debug/onesource -p backend -x "*.db" --save --dry-run
           grep -Fq "*.db" .onesourcerc
