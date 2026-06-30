@@ -233,7 +233,7 @@ This project started as a vibe-coded Python script. It's now a hand-written Rust
 - [x] Token counter — estimate how many tokens the output will use before you paste it
 
 **Phase 2: Advanced Workflows (The Differentiators)**
-- [ ] Profile polish — keep the existing basic save/load/list workflow, then consider small commands like `profile show`, `profile rm`, or `profile rename`
+- [x] Profile management — save, load, list, show, create, update, replace, rename, and delete profiles
 - [ ] Git Diff integration — incremental packing for modified files only, saving LLM context space
 
 **Phase 3: Ecosystem & Integrations**
