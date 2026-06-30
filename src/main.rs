@@ -178,6 +178,37 @@ fn main() -> Result<()> {
                     }
                     return Ok(());
                 }
+                configs::ProfileSubcommands::Desc {
+                    description,
+                    profile,
+                } => {
+                    if let Some(mut config_doc) = Args::read_config(&config_path)? {
+                        if let Some(p) = config_doc.profiles.get_mut(profile) {
+                            p.description = Some(description.clone());
+                            let json_string = serde_json::to_string_pretty(&config_doc)
+                                .context("Failed to serialize configuration to JSON")?;
+                            std::fs::write(&config_path, json_string).with_context(|| {
+                                format!("Failed to write config file: {}", config_path.display())
+                            })?;
+                            println!(
+                                "Successfully updated description for profile '{}'",
+                                profile
+                            );
+                        } else {
+                            return Err(anyhow::anyhow!(
+                                "Profile '{}' not found in {}",
+                                profile,
+                                config_path.display()
+                            ));
+                        }
+                    } else {
+                        return Err(anyhow::anyhow!(
+                            "No .onesourcerc found or invalid format at {}",
+                            config_path.display()
+                        ));
+                    }
+                    return Ok(());
+                }
             },
         }
     }

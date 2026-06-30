@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "3.0.0")]
+#[command(name = "onesource", author = "lolLeo", version = "3.1.0")]
 pub struct Args {
     // File setting
     #[serde(skip)]
@@ -119,6 +119,10 @@ pub struct Args {
     pub save: Option<String>,
 
     #[serde(skip)]
+    #[arg(long, help = "Description for the profile (used with --save)")]
+    pub desc: Option<String>,
+
+    #[serde(skip)]
     #[arg(
         long,
         action = clap::ArgAction::SetTrue,
@@ -164,6 +168,13 @@ pub enum ProfileSubcommands {
     Ls {
         #[arg(long, help = "Output in JSON format")]
         json: bool,
+    },
+    /// Set or update the description of a profile
+    Desc {
+        #[arg(help = "The new description")]
+        description: String,
+        #[arg(short, long, help = "The profile name to update")]
+        profile: String,
     },
 }
 
@@ -258,7 +269,7 @@ impl Args {
         };
 
         let profile = ProfileConfig {
-            description: None,
+            description: self.desc.clone(),
             output_path: self.output_path.clone(),
             no_ignore: self.no_ignore,
             include: self.include.clone(),
@@ -271,10 +282,12 @@ impl Args {
             no_blacklist: self.no_blacklist,
         };
 
-        // If updating an existing profile, preserve the description.
+        // If not explicitly setting a description via --desc, preserve the existing one.
         let mut final_profile = profile;
-        if let Some(existing) = config_doc.profiles.get(profile_name) {
-            final_profile.description = existing.description.clone();
+        if final_profile.description.is_none() {
+            if let Some(existing) = config_doc.profiles.get(profile_name) {
+                final_profile.description = existing.description.clone();
+            }
         }
 
         config_doc

@@ -73,8 +73,20 @@ jobs:
           # Reset to a valid new format first
           ./target/debug/onesource -i "*.rs" --save
           ./target/debug/onesource -p non_existent 2>&1 | grep -q "not found"
+
+          echo ">>> 10. Testing Profile Description (via --save --desc)"
+          ./target/debug/onesource --save desc_test --desc "Test Description"
+          ./target/debug/onesource profile ls | grep "desc_test" | grep -q "Test Description"
+
+          echo ">>> 11. Testing Profile Description Update (via profile desc)"
+          ./target/debug/onesource profile desc "Updated Desc" -p desc_test
+          ./target/debug/onesource profile ls | grep "desc_test" | grep -q "Updated Desc"
+
+          echo ">>> 12. Testing Description Preservation"
+          ./target/debug/onesource --save desc_test
+          ./target/debug/onesource profile ls | grep "desc_test" | grep -q "Updated Desc"
           
-          echo ">>> 10. Testing Token Counter & File Filtering"
+          echo ">>> 13. Testing Token Counter & File Filtering"
           ./target/debug/onesource -i "src/main.rs" --dry-run | grep -q "Total Tokens:"
           
           echo ">>> ALL INTEGRATION TESTS PASSED <<<"

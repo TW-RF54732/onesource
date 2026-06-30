@@ -128,19 +128,6 @@ onesource -x "tests/,legacy/"
 onesource --dry-run
 ```
 
-**將設定儲存到指定的 Profile：**
-
-```bash
-onesource -i "*.rs" -x "target/" --save backend
-# 下次只需執行： onesource -p backend
-```
-
-**列出所有已儲存的 Profile：**
-
-```bash
-onesource profile ls
-```
-
 **將目錄結構樹與打包內容分開顯示：**  
 *(適合用來給 AI 完整的結構上下文，但只發送特定的檔案給它)*
 
@@ -155,10 +142,9 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | 標籤 (Flag) | 縮寫 (Short) | 預設值 (Default) | 描述 (Description) |
 |---|---|---|---|
 | `path` | — | `.` (當前目錄) | 要掃描的目標目錄 |
-| `--output` | `-o` | `{project name}.onesource` | 輸出檔案路徑 |
-| `--profile` | `-p` | `default` | 載入指定的設定 Profile |
-| `--include` | `-i` | 所有檔案 | 只包含符合此 glob 模式的檔案 |
-| `--exclude` | `-x` | 無 | 排除符合此 glob 模式的檔案。衝突時優先於 `--include`。 |
+| `--output-path` | `-o` | `{project name}.onesource` | 輸出檔案路徑 |
+| `--include` | `-i` | 所有檔案 | 只包含符合這些逗號分隔 glob 模式的檔案 |
+| `--exclude` | `-x` | 無 | 排除符合這些逗號分隔 glob 模式的檔案。衝突時優先於 `--include`。 |
 | `--no-ignore` | — | false | 忽略 `.gitignore` 規則並掃描所有內容 |
 | `--no-blacklist` | — | false | 停用安全性黑名單 (允許掃描 `.git/`, `node_modules/` 等) |
 | `--tree-include` | `--ti` | 繼承 `-i` | 用於目錄樹的 Glob 過濾器 (啟用獨立的樹狀圖模式) |
@@ -168,6 +154,9 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | `--max-size` | `-m` | 500 (KB) | 跳過大於此大小的檔案 |
 | `--dry-run` | — | false | 預覽將被打包的檔案，但不寫入 |
 | `--save` | — | `default` | 將當前參數儲存到 `.onesourcerc` 中的指定 Profile |
+| `--desc` | — | 無 | 搭配 `--save` 使用時，儲存這個 Profile 的描述 |
+| `--show-arg` | — | false | 印出解析後的參數，主要用於除錯 |
+| `--profile` | `-p` | `default` | 載入指定的已儲存 Profile |
 | `--no-config` | — | false | 忽略 `.onesourcerc`，只使用 CLI 參數 |
 | `--copy` | `-c` | false | 直接複製輸出至剪貼簿 (不會有任何檔案被創建或寫入) |
 
@@ -176,9 +165,15 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 
 ## 設定檔 (Configuration File)
 
-加上 `--save [名稱]` 執行會在你的專案目錄中建立或更新 `.onesourcerc` 檔案。這個檔案現在支援多個 **Profiles**，讓你可以針對不同情境（如後端、前端、測試）瞬間切換設定。
+加上 `--save [名稱]` 執行會在你的專案目錄中建立或更新 `.onesourcerc` 檔案。這是一個可選的基礎流程，適合保存常用參數組合。Profile 管理目前刻意保持很小：儲存、載入、列出現有設定。
 
 **優先順序：** CLI 參數 → 指定的 Profile → 內部預設值
+
+```bash
+onesource -i "*.rs" -x "target/" --save backend
+onesource -p backend
+onesource profile ls
+```
 
 範例 `.onesourcerc`：
 
@@ -198,7 +193,7 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 }
 ```
 
-> 注意：`path`、`--dry-run`、`--save` 和 `--show-arg` 永遠不會被存入設定檔中 — 它們始終作為 CLI 參數傳遞。
+> 注意：`path`、`--dry-run`、`--save`、`--show-arg` 和剪貼簿行為只屬於 CLI 參數。`.onesourcerc` 是設定輸入，預設打包專案檔案時會被安全性黑名單略過。
 
 -----
 
@@ -239,7 +234,7 @@ version = "0.1.0"
 
 **第二階段：進階工作流程 (差異化功能)**
 
-  * [ ] 多個設定檔設定 — 瞬間切換設定 (例如：`onesource --profile backend`)。
+  * [ ] Profile 打磨 — 保留現有基礎的儲存、載入、列出流程，之後再考慮 `profile show`、`profile rm` 或 `profile rename` 這類小指令。
   * [ ] Git Diff 整合 — 只對修改過的檔案進行增量打包，節省 LLM 的上下文空間。
 
 **第三階段：生態系統與整合**

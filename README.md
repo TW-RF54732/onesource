@@ -111,17 +111,6 @@ onesource -x "tests/,legacy/"
 onesource --dry-run
 ```
 
-**Save your settings to a specific profile:**
-```bash
-onesource -i "*.rs" -x "target/" --save backend
-# Next time, just run: onesource -p backend
-```
-
-**List all saved profiles:**
-```bash
-onesource profile ls
-```
-
 **Show the directory tree separately from what gets packed:**  
 *(Good for giving AI the full structure context, but only sending it specific files)*
 ```bash
@@ -135,10 +124,9 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | Flag | Short | Default | Description |
 |---|---|---|---|
 | `path` | — | `.` (current dir) | Target directory to scan |
-| `--output` | `-o` | `<folder-name>.onesource` | Output file path |
-| `--profile` | `-p` | `default` | Load a specific configuration profile |
-| `--include` | `-i` | all files | Only include files matching this glob pattern |
-| `--exclude` | `-x` | none | Exclude files matching this glob pattern. Wins over `--include` on conflict. |
+| `--output-path` | `-o` | `<folder-name>.onesource` | Output file path |
+| `--include` | `-i` | all files | Only include files matching these comma-separated glob patterns |
+| `--exclude` | `-x` | none | Exclude files matching these comma-separated glob patterns. Wins over `--include` on conflict. |
 | `--no-ignore` | — | false | Ignore `.gitignore` rules when scanning file content |
 | `--no-blacklist` | — | false | Disable the safety blacklist (allows scanning `.git/`, `node_modules/`, etc.) |
 | `--tree-include` | `--ti` | inherits `-i` | Glob filter for the directory tree (enables independent tree mode) |
@@ -148,16 +136,25 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | `--max-size` | `-m` | 500 (KB) | Skip files larger than this size |
 | `--dry-run` | — | false | Preview files that would be packed, without writing |
 | `--save` | — | `default` | Save current flags to specified profile in `.onesourcerc` |
+| `--desc` | — | none | Description to save with a profile when used with `--save` |
+| `--show-arg` | — | false | Print resolved arguments for debugging |
+| `--profile` | `-p` | `default` | Load a specific saved profile |
 | `--no-config` | — | false | Ignore `.onesourcerc` and use only CLI flags |
-| `--copy` | `-c` | false | copy the result into clipboard. No file will be create or edit, don't work with dry run.|
+| `--copy` | `-c` | false | Copy the result to the clipboard instead of writing a file |
 
 ---
 
 ## Configuration File
 
-Running with `--save [NAME]` creates or updates a `.onesourcerc` file in your project directory. This file supports multiple **Profiles**, allowing you to switch between different contexts (e.g., backend, frontend, tests) instantly.
+Running with `--save [NAME]` creates or updates a `.onesourcerc` file in your project directory. This is a basic optional workflow for saving repeated flag combinations. Profile management is intentionally small for now: save one, load one, and list what exists.
 
 **Priority order:** CLI flags → Chosen Profile → Defaults
+
+```bash
+onesource -i "*.rs" -x "target/" --save backend
+onesource -p backend
+onesource profile ls
+```
 
 Example `.onesourcerc`:
 ```json
@@ -176,7 +173,7 @@ Example `.onesourcerc`:
 }
 ```
 
-> Note: `path`, `--dry-run`, `--save`, and `--show-arg` are never saved to config — they're always passed as CLI arguments.
+> Note: `path`, `--dry-run`, `--save`, `--show-arg`, and clipboard behavior are CLI-only. `.onesourcerc` is used as configuration input and is skipped by the default safety blacklist when packing project files.
 
 ---
 
@@ -212,14 +209,14 @@ Paste that into Claude, ChatGPT, or Gemini. The XML-style tags help the AI under
 This project started as a vibe-coded Python script. It's now a hand-written Rust binary that I actually understand (mostly). Here's what's next:
 
 **Phase 1: Core Foundation (Fixes & Must-Haves)**
-- [x] Hidden files support — correctly packs `.github/`, `.onesourcerc` while auto-blocking `.git/` or other file that hardcode in `filter_utils.rs`'s blacklist.
+- [x] Hidden files support — reads hidden project files such as `.github/` while auto-blocking sensitive or noisy paths like `.git/`, `.env`, `node_modules/`, `target/`, and `.onesourcerc`
 - [x] Safety blacklist — hardcoded block for `.git`, `node_modules`, `__pycache__`, `target` so you can't nuke your context window by accident
 - [x] Smart output naming — output named after your project folder (`my-app.onesource` instead of `{project name}.onesource`)
 - [X] Clipboard copy (`-c` flag) — write to clipboard instead of a file
 - [x] Token counter — estimate how many tokens the output will use before you paste it
 
 **Phase 2: Advanced Workflows (The Differentiators)**
-- [ ] Multiple config profiles — switch settings instantly (e.g., `onesource --profile backend`)
+- [ ] Profile polish — keep the existing basic save/load/list workflow, then consider small commands like `profile show`, `profile rm`, or `profile rename`
 - [ ] Git Diff integration — incremental packing for modified files only, saving LLM context space
 
 **Phase 3: Ecosystem & Integrations**

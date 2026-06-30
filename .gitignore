@@ -30,3 +30,5 @@ allCode.txt
 # release.py
 target/
 *.onesource
+.gemini/
+gha-creds-*.json
