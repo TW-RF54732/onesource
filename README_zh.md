@@ -153,6 +153,37 @@ onesource explain Cargo.toml README.md -i "*.rs" --tree-include "*.rs,*.toml,*.m
 
 -----
 
+## 使用 `explain` 除錯
+
+當某個檔案或資料夾沒有出現在你預期的位置時，可以用 `explain` 查原因。它會使用和一般執行相同的 profile 與掃描參數，並分開顯示 content 與 tree 的判斷結果。
+
+```bash
+onesource explain Cargo.toml README.md
+onesource explain .env --no-blacklist
+onesource explain Cargo.toml -p backend -i "*.rs" --tree-include "*.rs,*.toml"
+```
+
+輸出範例：
+
+```text
+Cargo.toml
+----------------
+
+Content
+  Result  not included by include
+  Rule    include = *.rs
+
+Tree
+  Result  included
+```
+
+注意：
+- `explain` 接收的是實際路徑，不是 glob pattern。請使用 `onesource explain install.sh`，不要用 `onesource explain "*.sh"`。
+- 它只會解釋你明確輸入的路徑，不會把隱藏或敏感的 skipped path 全部列出來。
+- `--profile`、`--no-config`、`--include`、`--exclude`、`--no-ignore`、`--no-blacklist`、`--tree-include`、`--tree-exclude`、`--tree-no-ignore`、`--no-tree`、`--max-size` 等掃描相關參數都可以搭配 `explain` 使用。
+
+-----
+
 ## 所有選項 (All Options)
 
 | 標籤 (Flag) | 縮寫 (Short) | 預設值 (Default) | 描述 (Description) |

@@ -127,10 +127,41 @@ onesource --dry-run
 onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 ```
 
-**Explain why a specific path is included or blocked:**
+**Debug why a path is included or blocked:**
 ```bash
 onesource explain Cargo.toml README.md -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 ```
+
+---
+
+## Debugging with `explain`
+
+Use `explain` when a file or folder did not show up where you expected. It checks the same profile and scan options as a normal run, then reports the content decision and tree decision separately.
+
+```bash
+onesource explain Cargo.toml README.md
+onesource explain .env --no-blacklist
+onesource explain Cargo.toml -p backend -i "*.rs" --tree-include "*.rs,*.toml"
+```
+
+Example output:
+
+```text
+Cargo.toml
+----------------
+
+Content
+  Result  not included by include
+  Rule    include = *.rs
+
+Tree
+  Result  included
+```
+
+Notes:
+- `explain` takes literal paths, not glob patterns. Use `onesource explain install.sh`, not `onesource explain "*.sh"`.
+- It only explains paths you explicitly ask about, so it will not dump hidden or sensitive skipped paths.
+- Scan-related flags such as `--profile`, `--no-config`, `--include`, `--exclude`, `--no-ignore`, `--no-blacklist`, `--tree-include`, `--tree-exclude`, `--tree-no-ignore`, `--no-tree`, and `--max-size` work with `explain`.
 
 ---
 
