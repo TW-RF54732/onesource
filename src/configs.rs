@@ -3,11 +3,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
-use clap::{Parser, Subcommand};
+use clap::parser::ValueSource;
+use clap::{ArgMatches, Args as ClapArgs, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "3.1.0")]
+#[command(name = "onesource", author = "lolLeo", version = "3.2.0")]
 pub struct Args {
     // File setting
     #[serde(skip)]
@@ -110,16 +111,15 @@ pub struct Args {
     pub show_arg: Option<bool>,
 
     #[serde(skip)]
-    #[arg(
-        long,
-        default_missing_value = "default",
-        num_args = 0..=1,
-        help = "Save all argument into .onesourcerc (JSON) under specified profile"
-    )]
-    pub save: Option<String>,
+    #[arg(long, action = clap::ArgAction::SetTrue, help = "Save this command's explicit options back to the active profile")]
+    pub save: bool,
 
     #[serde(skip)]
-    #[arg(long, help = "Description for the profile (used with --save)")]
+    #[arg(long, action = clap::ArgAction::SetTrue, help = "Replace the active profile when saving instead of merging")]
+    pub replace: bool,
+
+    #[serde(skip)]
+    #[arg(long, help = "Description for the profile")]
     pub desc: Option<String>,
 
     #[serde(skip)]
@@ -132,7 +132,10 @@ pub struct Args {
 
     #[arg(
         long,
-        action = clap::ArgAction::SetTrue,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
         help = "Disable the hardcoded blacklist (e.g. .git/)"
     )]
     pub no_blacklist: Option<bool>,
@@ -165,17 +168,110 @@ pub enum Commands {
 #[derive(Subcommand, Debug, Serialize, Deserialize)]
 pub enum ProfileSubcommands {
     /// List all available profiles
-    Ls {
+    #[command(alias = "ls")]
+    List {
         #[arg(long, help = "Output in JSON format")]
         json: bool,
     },
-    /// Set or update the description of a profile
+    /// Show a single profile
+    Show {
+        profile: String,
+        #[arg(long, help = "Output in JSON format")]
+        json: bool,
+    },
+    /// Create a profile
+    Create {
+        profile: String,
+        #[command(flatten)]
+        options: ProfileOptions,
+    },
+    /// Update a profile
+    Update {
+        profile: String,
+        #[arg(long, action = clap::ArgAction::SetTrue, help = "Replace instead of merging")]
+        replace: bool,
+        #[command(flatten)]
+        options: ProfileOptions,
+    },
+    /// Delete a profile
+    #[command(alias = "rm")]
+    Delete { profile: String },
+    /// Rename a profile
+    Rename { old: String, new: String },
+    /// Set or update the description of a profile (legacy; use profile update --desc)
+    #[command(hide = true)]
     Desc {
         #[arg(help = "The new description")]
         description: String,
         #[arg(short, long, help = "The profile name to update")]
         profile: String,
     },
+}
+
+#[derive(ClapArgs, Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProfileOptions {
+    #[arg(short = 'o', long, help = "The output file path")]
+    pub output_path: Option<PathBuf>,
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Ignore .gitignore rules when scanning file content"
+    )]
+    pub no_ignore: Option<bool>,
+    #[arg(short, long, help = "Comma-separated list of patterns to include")]
+    pub include: Option<String>,
+    #[arg(
+        short = 'x',
+        long,
+        help = "Comma-separated list of patterns to exclude"
+    )]
+    pub exclude: Option<String>,
+    #[arg(
+        long,
+        visible_alias = "ti",
+        help = "Custom include patterns for tree view"
+    )]
+    pub tree_include: Option<String>,
+    #[arg(
+        long,
+        visible_alias = "tx",
+        help = "Custom exclude patterns for tree view"
+    )]
+    pub tree_exclude: Option<String>,
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Disable the directory tree visualization"
+    )]
+    pub no_tree: Option<bool>,
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Ignore .gitignore rules specifically for the tree view"
+    )]
+    pub tree_no_ignore: Option<bool>,
+    #[arg(short, long, help = "Max file size in KB")]
+    pub max_size: Option<usize>,
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Disable the hardcoded blacklist"
+    )]
+    pub no_blacklist: Option<bool>,
+    #[arg(long, help = "Description for the profile")]
+    pub desc: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -204,9 +300,73 @@ pub struct ProfileConfig {
     pub no_blacklist: Option<bool>,
 }
 
+impl ProfileConfig {
+    pub fn merge_from(&mut self, update: ProfileConfig) {
+        if update.description.is_some() {
+            self.description = update.description;
+        }
+        if update.output_path.is_some() {
+            self.output_path = update.output_path;
+        }
+        if update.no_ignore.is_some() {
+            self.no_ignore = update.no_ignore;
+        }
+        if update.include.is_some() {
+            self.include = update.include;
+        }
+        if update.exclude.is_some() {
+            self.exclude = update.exclude;
+        }
+        if update.tree_include.is_some() {
+            self.tree_include = update.tree_include;
+        }
+        if update.tree_exclude.is_some() {
+            self.tree_exclude = update.tree_exclude;
+        }
+        if update.no_tree.is_some() {
+            self.no_tree = update.no_tree;
+        }
+        if update.tree_no_ignore.is_some() {
+            self.tree_no_ignore = update.tree_no_ignore;
+        }
+        if update.max_size.is_some() {
+            self.max_size = update.max_size;
+        }
+        if update.no_blacklist.is_some() {
+            self.no_blacklist = update.no_blacklist;
+        }
+    }
+}
+
+impl ProfileOptions {
+    pub fn to_profile_config(&self) -> ProfileConfig {
+        ProfileConfig {
+            description: self.desc.clone(),
+            output_path: self.output_path.clone(),
+            no_ignore: self.no_ignore,
+            include: self.include.clone(),
+            exclude: self.exclude.clone(),
+            tree_include: self.tree_include.clone(),
+            tree_exclude: self.tree_exclude.clone(),
+            no_tree: self.no_tree,
+            tree_no_ignore: self.tree_no_ignore,
+            max_size: self.max_size,
+            no_blacklist: self.no_blacklist,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigDocument {
     pub profiles: HashMap<String, ProfileConfig>,
+}
+
+impl ConfigDocument {
+    pub fn new() -> Self {
+        Self {
+            profiles: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -227,6 +387,186 @@ pub struct AppConfig {
 }
 
 impl Args {
+    fn is_valid_profile_name(profile_name: &str) -> bool {
+        !profile_name.is_empty()
+            && profile_name
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+    }
+
+    pub fn validate_profile_name(profile_name: &str) -> Result<()> {
+        if Self::is_valid_profile_name(profile_name) {
+            Ok(())
+        } else {
+            Err(anyhow!(
+                "Invalid profile name '{}'. Use only letters, numbers, '.', '_' and '-'.",
+                profile_name
+            ))
+        }
+    }
+
+    fn read_config_or_empty<P: AsRef<Path>>(path: P) -> Result<ConfigDocument> {
+        Ok(Self::read_config(path)?.unwrap_or_else(ConfigDocument::new))
+    }
+
+    pub fn write_config<P: AsRef<Path>>(path: P, config_doc: &ConfigDocument) -> Result<()> {
+        let path = path.as_ref();
+        let json_string = serde_json::to_string_pretty(config_doc)
+            .context("Failed to serialize configuration to JSON")?;
+        fs::write(path, json_string)
+            .with_context(|| format!("Failed to write config file: {}", path.display()))?;
+        Ok(())
+    }
+
+    pub fn sorted_profiles(config_doc: &ConfigDocument) -> Vec<(&String, &ProfileConfig)> {
+        let mut profiles: Vec<_> = config_doc.profiles.iter().collect();
+        profiles.sort_by(|(left, _), (right, _)| left.cmp(right));
+        profiles
+    }
+
+    pub fn get_profile<'a>(
+        config_doc: &'a ConfigDocument,
+        profile_name: &str,
+    ) -> Result<&'a ProfileConfig> {
+        config_doc
+            .profiles
+            .get(profile_name)
+            .ok_or_else(|| anyhow!("Profile '{}' not found in .onesourcerc", profile_name))
+    }
+
+    pub fn create_profile<P: AsRef<Path>>(
+        path: P,
+        profile_name: &str,
+        profile: ProfileConfig,
+    ) -> Result<()> {
+        Self::validate_profile_name(profile_name)?;
+        let mut config_doc = Self::read_config_or_empty(&path)?;
+        if config_doc.profiles.contains_key(profile_name) {
+            return Err(anyhow!("Profile '{}' already exists", profile_name));
+        }
+        config_doc
+            .profiles
+            .insert(profile_name.to_string(), profile);
+        Self::write_config(path, &config_doc)
+    }
+
+    pub fn update_profile<P: AsRef<Path>>(
+        path: P,
+        profile_name: &str,
+        profile: ProfileConfig,
+        replace: bool,
+    ) -> Result<()> {
+        Self::validate_profile_name(profile_name)?;
+        let mut config_doc = Self::read_config_or_empty(&path)?;
+        let existing = config_doc
+            .profiles
+            .get_mut(profile_name)
+            .ok_or_else(|| anyhow!("Profile '{}' not found in .onesourcerc", profile_name))?;
+
+        if replace {
+            *existing = profile;
+        } else {
+            existing.merge_from(profile);
+        }
+
+        Self::write_config(path, &config_doc)
+    }
+
+    pub fn upsert_profile<P: AsRef<Path>>(
+        path: P,
+        profile_name: &str,
+        profile: ProfileConfig,
+        replace: bool,
+    ) -> Result<()> {
+        Self::validate_profile_name(profile_name)?;
+        let mut config_doc = Self::read_config_or_empty(&path)?;
+
+        if replace {
+            config_doc
+                .profiles
+                .insert(profile_name.to_string(), profile);
+        } else {
+            config_doc
+                .profiles
+                .entry(profile_name.to_string())
+                .and_modify(|existing| existing.merge_from(profile.clone()))
+                .or_insert(profile);
+        }
+
+        Self::write_config(path, &config_doc)
+    }
+
+    pub fn delete_profile<P: AsRef<Path>>(path: P, profile_name: &str) -> Result<()> {
+        Self::validate_profile_name(profile_name)?;
+        let mut config_doc = Self::read_config_or_empty(&path)?;
+        if config_doc.profiles.remove(profile_name).is_none() {
+            return Err(anyhow!(
+                "Profile '{}' not found in .onesourcerc",
+                profile_name
+            ));
+        }
+        Self::write_config(path, &config_doc)
+    }
+
+    pub fn rename_profile<P: AsRef<Path>>(path: P, old: &str, new: &str) -> Result<()> {
+        Self::validate_profile_name(old)?;
+        Self::validate_profile_name(new)?;
+        let mut config_doc = Self::read_config_or_empty(&path)?;
+        if config_doc.profiles.contains_key(new) {
+            return Err(anyhow!("Profile '{}' already exists", new));
+        }
+        let profile = config_doc
+            .profiles
+            .remove(old)
+            .ok_or_else(|| anyhow!("Profile '{}' not found in .onesourcerc", old))?;
+        config_doc.profiles.insert(new.to_string(), profile);
+        Self::write_config(path, &config_doc)
+    }
+
+    fn explicit(matches: &ArgMatches, id: &str) -> bool {
+        matches
+            .value_source(id)
+            .is_some_and(|source| source == ValueSource::CommandLine)
+    }
+
+    pub fn explicit_profile_config(&self, matches: &ArgMatches) -> ProfileConfig {
+        ProfileConfig {
+            description: Self::explicit(matches, "desc")
+                .then(|| self.desc.clone())
+                .flatten(),
+            output_path: Self::explicit(matches, "output_path")
+                .then(|| self.output_path.clone())
+                .flatten(),
+            no_ignore: Self::explicit(matches, "no_ignore")
+                .then_some(self.no_ignore)
+                .flatten(),
+            include: Self::explicit(matches, "include")
+                .then(|| self.include.clone())
+                .flatten(),
+            exclude: Self::explicit(matches, "exclude")
+                .then(|| self.exclude.clone())
+                .flatten(),
+            tree_include: Self::explicit(matches, "tree_include")
+                .then(|| self.tree_include.clone())
+                .flatten(),
+            tree_exclude: Self::explicit(matches, "tree_exclude")
+                .then(|| self.tree_exclude.clone())
+                .flatten(),
+            no_tree: Self::explicit(matches, "no_tree")
+                .then_some(self.no_tree)
+                .flatten(),
+            tree_no_ignore: Self::explicit(matches, "tree_no_ignore")
+                .then_some(self.tree_no_ignore)
+                .flatten(),
+            max_size: Self::explicit(matches, "max_size")
+                .then_some(self.max_size)
+                .flatten(),
+            no_blacklist: Self::explicit(matches, "no_blacklist")
+                .then_some(self.no_blacklist)
+                .flatten(),
+        }
+    }
+
     pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Option<ConfigDocument>> {
         let path = path.as_ref();
         if !path.exists() {
@@ -253,52 +593,10 @@ impl Args {
             return Err(anyhow!(msg));
         }
 
-        Ok(None)
-    }
-
-    pub fn save_config<P: AsRef<Path>>(&self, path: P, profile_name: &str) -> Result<()> {
-        let path = path.as_ref();
-
-        // Try to read existing config, but if it's invalid (e.g. old format),
-        // we just start with a fresh one instead of failing.
-        let mut config_doc = match Self::read_config(path) {
-            Ok(Some(doc)) => doc,
-            _ => ConfigDocument {
-                profiles: HashMap::new(),
-            },
-        };
-
-        let profile = ProfileConfig {
-            description: self.desc.clone(),
-            output_path: self.output_path.clone(),
-            no_ignore: self.no_ignore,
-            include: self.include.clone(),
-            exclude: self.exclude.clone(),
-            tree_include: self.tree_include.clone(),
-            tree_exclude: self.tree_exclude.clone(),
-            no_tree: self.no_tree,
-            tree_no_ignore: self.tree_no_ignore,
-            max_size: self.max_size,
-            no_blacklist: self.no_blacklist,
-        };
-
-        // If not explicitly setting a description via --desc, preserve the existing one.
-        let mut final_profile = profile;
-        if final_profile.description.is_none() {
-            if let Some(existing) = config_doc.profiles.get(profile_name) {
-                final_profile.description = existing.description.clone();
-            }
-        }
-
-        config_doc
-            .profiles
-            .insert(profile_name.to_string(), final_profile);
-
-        let json_string = serde_json::to_string_pretty(&config_doc)
-            .context("Failed to serialize configuration to JSON")?;
-        fs::write(path, json_string)
-            .with_context(|| format!("Failed to write config file: {}", path.display()))?;
-        Ok(())
+        Err(anyhow!(
+            "Invalid configuration format in {}. Please fix or delete the file before saving.",
+            path.display()
+        ))
     }
 
     pub fn merge_saved_config(&mut self, path: &Path) -> Result<()> {
@@ -379,5 +677,136 @@ impl Args {
             copy: self.copy,
             dry_run: self.dry_run,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_config_path(test_name: &str) -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock went backwards")
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!("onesource-{}-{}", test_name, unique));
+        fs::create_dir_all(&dir).expect("failed to create temp dir");
+        dir.join(".onesourcerc")
+    }
+
+    fn profile(include: Option<&str>, exclude: Option<&str>) -> ProfileConfig {
+        ProfileConfig {
+            include: include.map(str::to_string),
+            exclude: exclude.map(str::to_string),
+            ..ProfileConfig::default()
+        }
+    }
+
+    #[test]
+    fn create_profile_fails_when_duplicate() {
+        let path = temp_config_path("duplicate-create");
+        Args::create_profile(&path, "backend", profile(Some("src/backend/**"), None)).unwrap();
+
+        let error = Args::create_profile(&path, "backend", profile(Some("src/frontend/**"), None))
+            .unwrap_err();
+
+        assert!(error.to_string().contains("already exists"));
+    }
+
+    #[test]
+    fn update_profile_merges_unspecified_fields() {
+        let path = temp_config_path("merge-update");
+        Args::create_profile(
+            &path,
+            "backend",
+            ProfileConfig {
+                include: Some("src/backend/**".to_string()),
+                max_size: Some(300),
+                ..ProfileConfig::default()
+            },
+        )
+        .unwrap();
+
+        Args::update_profile(
+            &path,
+            "backend",
+            ProfileConfig {
+                exclude: Some("*.db".to_string()),
+                max_size: Some(500),
+                ..ProfileConfig::default()
+            },
+            false,
+        )
+        .unwrap();
+
+        let config = Args::read_config(&path).unwrap().unwrap();
+        let backend = config.profiles.get("backend").unwrap();
+        assert_eq!(backend.include.as_deref(), Some("src/backend/**"));
+        assert_eq!(backend.exclude.as_deref(), Some("*.db"));
+        assert_eq!(backend.max_size, Some(500));
+    }
+
+    #[test]
+    fn update_profile_replace_removes_unspecified_fields() {
+        let path = temp_config_path("replace-update");
+        Args::create_profile(
+            &path,
+            "backend",
+            ProfileConfig {
+                include: Some("src/backend/**".to_string()),
+                exclude: Some("*.db".to_string()),
+                ..ProfileConfig::default()
+            },
+        )
+        .unwrap();
+
+        Args::update_profile(&path, "backend", profile(Some("*.py"), None), true).unwrap();
+
+        let config = Args::read_config(&path).unwrap().unwrap();
+        let backend = config.profiles.get("backend").unwrap();
+        assert_eq!(backend.include.as_deref(), Some("*.py"));
+        assert_eq!(backend.exclude, None);
+    }
+
+    #[test]
+    fn delete_and_rename_profile_cover_failure_cases() {
+        let path = temp_config_path("delete-rename");
+        Args::create_profile(&path, "old", profile(Some("old/**"), None)).unwrap();
+        Args::create_profile(&path, "taken", profile(Some("taken/**"), None)).unwrap();
+
+        let error = Args::rename_profile(&path, "old", "taken").unwrap_err();
+        assert!(error.to_string().contains("already exists"));
+
+        Args::rename_profile(&path, "old", "new").unwrap();
+        let error = Args::delete_profile(&path, "old").unwrap_err();
+        assert!(error.to_string().contains("not found"));
+
+        Args::delete_profile(&path, "new").unwrap();
+        let config = Args::read_config(&path).unwrap().unwrap();
+        assert!(!config.profiles.contains_key("new"));
+    }
+
+    #[test]
+    fn invalid_config_is_not_overwritten() {
+        let path = temp_config_path("invalid-config");
+        fs::write(&path, "{ definitely not json").unwrap();
+
+        let error =
+            Args::upsert_profile(&path, "backend", profile(Some("*.rs"), None), false).unwrap_err();
+        assert!(
+            error.to_string().contains("Failed to write")
+                || error.to_string().contains("not json")
+                || error.to_string().contains("invalid")
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), "{ definitely not json");
+    }
+
+    #[test]
+    fn profile_name_validation_rejects_path_like_names() {
+        assert!(Args::validate_profile_name("backend.api-1").is_ok());
+        assert!(Args::validate_profile_name("backend/api").is_err());
+        assert!(Args::validate_profile_name("backend api").is_err());
+        assert!(Args::validate_profile_name("").is_err());
     }
 }

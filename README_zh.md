@@ -153,8 +153,9 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | `--no-tree` | — | false | 在輸出中停用目錄結構樹 |
 | `--max-size` | `-m` | 500 (KB) | 跳過大於此大小的檔案 |
 | `--dry-run` | — | false | 預覽將被打包的檔案，但不寫入 |
-| `--save` | — | `default` | 將當前參數儲存到 `.onesourcerc` 中的指定 Profile |
-| `--desc` | — | 無 | 搭配 `--save` 使用時，儲存這個 Profile 的描述 |
+| `--save` | — | false | 將本次明確輸入的參數存回目前啟用的 Profile |
+| `--replace` | — | false | 儲存時以本次參數重建 Profile，而不是融合更新 |
+| `--desc` | — | 無 | 儲存 Profile 描述 |
 | `--show-arg` | — | false | 印出解析後的參數，主要用於除錯 |
 | `--profile` | `-p` | `default` | 載入指定的已儲存 Profile |
 | `--no-config` | — | false | 忽略 `.onesourcerc`，只使用 CLI 參數 |
@@ -165,15 +166,31 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 
 ## 設定檔 (Configuration File)
 
-加上 `--save [名稱]` 執行會在你的專案目錄中建立或更新 `.onesourcerc` 檔案。這是一個可選的基礎流程，適合保存常用參數組合。Profile 管理目前刻意保持很小：儲存、載入、列出現有設定。
+Profile 會存在專案目錄的 `.onesourcerc`。使用 `-p/--profile` 選擇目前啟用的 Profile；`--save` 會把本次明確輸入的參數存回該 Profile。預設是融合更新，未指定的欄位會保留；加上 `--replace` 則只保留本次輸入的參數。
 
 **優先順序：** CLI 參數 → 指定的 Profile → 內部預設值
 
 ```bash
-onesource -i "*.rs" -x "target/" --save backend
+onesource -p backend -i "*.rs" -x "target/" --save
 onesource -p backend
-onesource profile ls
+onesource profile list
+onesource profile show backend
+onesource -p backend -i "src/**/*.py" --save --replace
 ```
+
+Profile 管理指令：
+
+```bash
+onesource profile list
+onesource profile show backend
+onesource profile create backend -i "*.rs" --desc "Rust backend"
+onesource profile update backend -x "*.db"
+onesource profile update backend -i "src/**/*.py" --replace
+onesource profile rename backend api
+onesource profile delete api
+```
+
+`profile ls` 和 `profile rm` 仍可作為 `profile list` 與 `profile delete` 的短別名使用。
 
 範例 `.onesourcerc`：
 

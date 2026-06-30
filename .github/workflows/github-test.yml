@@ -1,0 +1,92 @@
+name: GitHub CLI Integration Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  cli-integration-test:
+    name: CLI Workflow Scenarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Debug Binary
+        run: cargo build
+
+      - name: Integration Test Suite
+        run: |
+          set -e
+
+          echo ">>> 1. Testing Default Packaging (Basic Flow)"
+          ./target/debug/onesource --dry-run
+
+          echo ">>> 2. Testing Profile Save (Default)"
+          ./target/debug/onesource -i "*.rs" -x "target/" --save
+          if [ ! -f .onesourcerc ]; then echo "Error: .onesourcerc not created"; exit 1; fi
+          grep -q "default" .onesourcerc
+          grep -Fq "*.rs" .onesourcerc
+
+          echo ">>> 3. Testing Profile Create (Named: 'backend')"
+          ./target/debug/onesource profile create backend -i "src/backend/*"
+          grep -q "backend" .onesourcerc
+          grep -Fq "src/backend/*" .onesourcerc
+
+          echo ">>> 4. Testing Profile Loading (-p backend)"
+          ./target/debug/onesource -p backend --dry-run | grep "using profile: backend"
+
+          echo ">>> 5. Testing CLI Override Priority (CLI > Profile)"
+          ./target/debug/onesource -p backend -i "*.toml" --dry-run | grep "Cargo.toml"
+
+          echo ">>> 6. Testing Profile List (Human Readable)"
+          ./target/debug/onesource profile list | grep -q "backend"
+          ./target/debug/onesource profile ls | grep -q "backend"
+
+          echo ">>> 7. Testing Profile List (JSON for Agents)"
+          ./target/debug/onesource profile list --json | jq '.' | grep -q "backend"
+
+          echo ">>> 8. Testing Backward Compatibility Warning"
+          echo '{"include": "*.rs", "max_size": 100}' > .onesourcerc
+          ./target/debug/onesource --dry-run 2>&1 | grep -q "Incompatible configuration format detected" || (echo "Legacy compatibility test failed"; exit 1)
+          rm .onesourcerc
+
+          echo ">>> 9. Testing Missing Profile Error"
+          ./target/debug/onesource -i "*.rs" --save
+          ./target/debug/onesource -p non_existent 2>&1 | grep -q "not found"
+
+          echo ">>> 10. Testing Profile Description (via profile create --desc)"
+          ./target/debug/onesource profile create desc_test --desc "Test Description"
+          ./target/debug/onesource profile list | grep "desc_test" | grep -q "Test Description"
+
+          echo ">>> 11. Testing Profile Description Update (via profile update --desc)"
+          ./target/debug/onesource profile update desc_test --desc "Updated Desc"
+          ./target/debug/onesource profile list | grep "desc_test" | grep -q "Updated Desc"
+
+          echo ">>> 12. Testing Description Preservation"
+          ./target/debug/onesource -p desc_test --save --dry-run
+          ./target/debug/onesource profile list | grep "desc_test" | grep -q "Updated Desc"
+
+          echo ">>> 13. Testing Profile Show, Merge Save, Replace Save"
+          ./target/debug/onesource profile show backend | grep -q "Profile: backend"
+          ./target/debug/onesource -p backend -x "*.db" --save --dry-run
+          grep -Fq "*.db" .onesourcerc
+          ./target/debug/onesource -p backend -i "*.py" --save --replace --dry-run
+          grep -Fq "*.py" .onesourcerc
+          ! grep -Fq "*.db" .onesourcerc
+
+          echo ">>> 14. Testing Profile Delete and Rename"
+          ./target/debug/onesource profile create rename_me -i "*.md"
+          ./target/debug/onesource profile rename rename_me renamed
+          ./target/debug/onesource profile show renamed | grep -q "Profile: renamed"
+          ./target/debug/onesource profile delete renamed
+          ! ./target/debug/onesource profile show renamed
+
+          echo ">>> 15. Testing Token Counter & File Filtering"
+          ./target/debug/onesource -i "src/main.rs" --dry-run | grep -q "Total Tokens:"
+
+          echo ">>> ALL INTEGRATION TESTS PASSED <<<"

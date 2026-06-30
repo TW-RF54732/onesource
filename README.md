@@ -135,8 +135,9 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 | `--no-tree` | — | false | Disable the directory tree in output |
 | `--max-size` | `-m` | 500 (KB) | Skip files larger than this size |
 | `--dry-run` | — | false | Preview files that would be packed, without writing |
-| `--save` | — | `default` | Save current flags to specified profile in `.onesourcerc` |
-| `--desc` | — | none | Description to save with a profile when used with `--save` |
+| `--save` | — | false | Save this command's explicit options back to the active profile |
+| `--replace` | — | false | Replace the active profile when saving instead of merging |
+| `--desc` | — | none | Description to save with a profile |
 | `--show-arg` | — | false | Print resolved arguments for debugging |
 | `--profile` | `-p` | `default` | Load a specific saved profile |
 | `--no-config` | — | false | Ignore `.onesourcerc` and use only CLI flags |
@@ -146,15 +147,31 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 
 ## Configuration File
 
-Running with `--save [NAME]` creates or updates a `.onesourcerc` file in your project directory. This is a basic optional workflow for saving repeated flag combinations. Profile management is intentionally small for now: save one, load one, and list what exists.
+Profiles live in `.onesourcerc` and let you save repeated flag combinations. Use `-p/--profile` to choose the active profile. `--save` writes this command's explicit options back to that active profile; by default it merges with existing values, and `--replace` rebuilds the profile from only the options passed this time.
 
 **Priority order:** CLI flags → Chosen Profile → Defaults
 
 ```bash
-onesource -i "*.rs" -x "target/" --save backend
+onesource -p backend -i "*.rs" -x "target/" --save
 onesource -p backend
-onesource profile ls
+onesource profile list
+onesource profile show backend
+onesource -p backend -i "src/**/*.py" --save --replace
 ```
+
+Profile management commands:
+
+```bash
+onesource profile list
+onesource profile show backend
+onesource profile create backend -i "*.rs" --desc "Rust backend"
+onesource profile update backend -x "*.db"
+onesource profile update backend -i "src/**/*.py" --replace
+onesource profile rename backend api
+onesource profile delete api
+```
+
+`profile ls` and `profile rm` are available as short aliases for `profile list` and `profile delete`.
 
 Example `.onesourcerc`:
 ```json

@@ -9,8 +9,38 @@ permissions:
   contents: write
 
 jobs:
+  release-preflight:
+    name: Release Preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Formatting Check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Unit Tests
+        run: cargo test
+
+      - name: Debug Build
+        run: cargo build
+
+      - name: CLI Smoke Test
+        run: |
+          ./target/debug/onesource --dry-run
+          ./target/debug/onesource profile create release_smoke -i "*.rs" --desc "Release smoke test"
+          ./target/debug/onesource profile show release_smoke | grep -q "Profile: release_smoke"
+
   build-and-release:
     name: Build & Upload Assets
+    needs: release-preflight
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
