@@ -8,7 +8,7 @@ use clap::{ArgMatches, Args as ClapArgs, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "3.2.1")]
+#[command(name = "onesource", author = "lolLeo", version = "3.3.0")]
 pub struct Args {
     // File setting
     #[serde(skip)]
@@ -161,8 +161,10 @@ pub enum Commands {
     /// Profile related commands
     Profile {
         #[command(subcommand)]
-        subcommand: ProfileSubcommands,
+        subcommand: Box<ProfileSubcommands>,
     },
+    /// Download the latest release and replace this executable in place
+    Update,
 }
 
 #[derive(Subcommand, Debug, Serialize, Deserialize)]

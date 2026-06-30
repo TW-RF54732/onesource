@@ -1,6 +1,7 @@
 mod configs;
 mod filter_utils;
 mod io_utils;
+mod self_update;
 mod tree_utils;
 
 use std::fs::File;
@@ -203,7 +204,11 @@ fn main() -> Result<()> {
     // 1. Handle subcommands early
     if let Some(command) = &args.command {
         match command {
-            configs::Commands::Profile { subcommand } => match subcommand {
+            configs::Commands::Update => {
+                self_update::run()?;
+                return Ok(());
+            }
+            configs::Commands::Profile { subcommand } => match &**subcommand {
                 configs::ProfileSubcommands::List { json } => {
                     if let Some(config_doc) = Args::read_config(&config_path)? {
                         if *json {

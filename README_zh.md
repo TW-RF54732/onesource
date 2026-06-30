@@ -79,6 +79,16 @@ curl -sSL https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.sh
 irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
 ```
 
+### 更新 (Updating)
+
+第一次安裝後，不需要再找安裝腳本，直接執行：
+
+```bash
+onesource update
+```
+
+這會下載最新 release，並覆蓋目前正在執行的 `onesource` 本體位置；全域安裝和免安裝可攜式執行檔都適用。
+
 這會安裝最新版本並自動將其加入你的 PATH 中。之後請重新啟動你的終端機。
 
 ### 免安裝可攜式執行檔 (Portable Binary)

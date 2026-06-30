@@ -1,6 +1,6 @@
 [package]
 name = "onesource"
-version = "3.2.1"
+version = "3.3.0"
 license = "MIT"
 description = "Placeholder"
 edition = "2021"

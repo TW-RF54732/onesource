@@ -68,6 +68,16 @@ irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | ie
 
 Installs the latest release and adds it to your PATH automatically. Restart your terminal after.
 
+### Updating
+
+After the first install, you do not need to find the install script again:
+
+```bash
+onesource update
+```
+
+This downloads the latest release and replaces the currently running `onesource` executable in place, so it works for both global installs and portable binaries.
+
 ### Portable Binary (no install)
 
 Don't want to install anything? Grab the binary from the [Releases page](https://github.com/TW-RF54732/onesource/releases), drop it in your project folder, and run it directly:
