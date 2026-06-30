@@ -127,6 +127,11 @@ onesource --dry-run
 onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 ```
 
+**Explain why a specific path is included or blocked:**
+```bash
+onesource explain Cargo.toml README.md -i "*.rs" --tree-include "*.rs,*.toml,*.md"
+```
+
 ---
 
 ## All Options

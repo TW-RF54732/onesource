@@ -1,4 +1,5 @@
 mod configs;
+mod explain;
 mod filter_utils;
 mod io_utils;
 mod self_update;
@@ -195,6 +196,10 @@ fn main() -> Result<()> {
     let matches = Args::command().get_matches();
     let mut args = Args::from_arg_matches(&matches)?;
     let explicit_profile = args.explicit_profile_config(&matches);
+    let command = args.command.clone();
+    if let Some(configs::Commands::Explain { options, .. }) = &command {
+        args.apply_explain_options(options);
+    }
     let base_path = args
         .path
         .clone()
@@ -202,10 +207,19 @@ fn main() -> Result<()> {
     let config_path = base_path.join(".onesourcerc");
 
     // 1. Handle subcommands early
-    if let Some(command) = &args.command {
+    if let Some(command) = &command {
         match command {
             configs::Commands::Update => {
                 self_update::run()?;
+                return Ok(());
+            }
+            configs::Commands::Explain { paths, .. } => {
+                if !args.no_config {
+                    args.merge_saved_config(&config_path)?;
+                }
+                let app_config = args.resolve();
+                let reports = explain::explain_paths(&app_config, paths)?;
+                explain::print_reports(&reports);
                 return Ok(());
             }
             configs::Commands::Profile { subcommand } => match &**subcommand {

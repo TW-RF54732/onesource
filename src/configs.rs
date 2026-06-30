@@ -8,7 +8,7 @@ use clap::{ArgMatches, Args as ClapArgs, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "3.3.1")]
+#[command(name = "onesource", author = "lolLeo", version = "3.4.0")]
 pub struct Args {
     // File setting
     #[serde(skip)]
@@ -156,7 +156,7 @@ pub struct Args {
     pub command: Option<Commands>,
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize)]
+#[derive(Subcommand, Debug, Clone, Serialize, Deserialize)]
 pub enum Commands {
     /// Profile related commands
     Profile {
@@ -165,9 +165,16 @@ pub enum Commands {
     },
     /// Download the latest release and replace this executable in place
     Update,
+    /// Explain why specific paths are included or blocked
+    Explain {
+        #[arg(required = true)]
+        paths: Vec<PathBuf>,
+        #[command(flatten)]
+        options: Box<ExplainOptions>,
+    },
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize)]
+#[derive(Subcommand, Debug, Clone, Serialize, Deserialize)]
 pub enum ProfileSubcommands {
     /// List all available profiles
     #[command(alias = "ls")]
@@ -208,6 +215,46 @@ pub enum ProfileSubcommands {
         #[arg(short, long, help = "The profile name to update")]
         profile: String,
     },
+}
+
+#[derive(ClapArgs, Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ExplainOptions {
+    #[command(flatten)]
+    pub profile_options: ProfileOptions,
+    #[arg(short, long, help = "Load a specific profile")]
+    pub profile: Option<String>,
+    #[arg(
+        long,
+        action = clap::ArgAction::SetTrue,
+        help = "Ignore the .onesourcerc configuration file"
+    )]
+    pub no_config: bool,
+    #[arg(
+        long,
+        action = clap::ArgAction::SetTrue,
+        help = "Preview mode: accepted for parity with normal runs"
+    )]
+    pub dry_run: bool,
+    #[arg(long, action = clap::ArgAction::SetTrue, help = "Accepted for parity with normal runs")]
+    pub save: bool,
+    #[arg(long, action = clap::ArgAction::SetTrue, help = "Accepted for parity with normal runs")]
+    pub replace: bool,
+    #[arg(
+        long,
+        short,
+        action = clap::ArgAction::SetTrue,
+        help = "Accepted for parity with normal runs"
+    )]
+    pub copy: bool,
+    #[arg(
+        long,
+        action = clap::ArgAction::Set,
+        num_args = 0..=1,
+        default_missing_value = "true",
+        require_equals = true,
+        help = "Accepted for parity with normal runs"
+    )]
+    pub show_arg: Option<bool>,
 }
 
 #[derive(ClapArgs, Debug, Clone, Serialize, Deserialize, Default)]
@@ -566,6 +613,57 @@ impl Args {
             no_blacklist: Self::explicit(matches, "no_blacklist")
                 .then_some(self.no_blacklist)
                 .flatten(),
+        }
+    }
+
+    pub fn apply_explain_options(&mut self, options: &ExplainOptions) {
+        let profile_options = &options.profile_options;
+
+        if let Some(profile) = &options.profile {
+            self.profile = Some(profile.clone());
+        }
+        if options.no_config {
+            self.no_config = true;
+        }
+        if options.dry_run {
+            self.dry_run = true;
+        }
+        if options.copy {
+            self.copy = true;
+        }
+        if options.show_arg.is_some() {
+            self.show_arg = options.show_arg;
+        }
+
+        if profile_options.output_path.is_some() {
+            self.output_path = profile_options.output_path.clone();
+        }
+        if profile_options.no_ignore.is_some() {
+            self.no_ignore = profile_options.no_ignore;
+        }
+        if profile_options.include.is_some() {
+            self.include = profile_options.include.clone();
+        }
+        if profile_options.exclude.is_some() {
+            self.exclude = profile_options.exclude.clone();
+        }
+        if profile_options.tree_include.is_some() {
+            self.tree_include = profile_options.tree_include.clone();
+        }
+        if profile_options.tree_exclude.is_some() {
+            self.tree_exclude = profile_options.tree_exclude.clone();
+        }
+        if profile_options.no_tree.is_some() {
+            self.no_tree = profile_options.no_tree;
+        }
+        if profile_options.tree_no_ignore.is_some() {
+            self.tree_no_ignore = profile_options.tree_no_ignore;
+        }
+        if profile_options.max_size.is_some() {
+            self.max_size = profile_options.max_size;
+        }
+        if profile_options.no_blacklist.is_some() {
+            self.no_blacklist = profile_options.no_blacklist;
         }
     }
 

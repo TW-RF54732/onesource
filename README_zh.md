@@ -145,6 +145,12 @@ onesource --dry-run
 onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 ```
 
+**解釋特定路徑為什麼會被包含或擋下：**
+
+```bash
+onesource explain Cargo.toml README.md -i "*.rs" --tree-include "*.rs,*.toml,*.md"
+```
+
 -----
 
 ## 所有選項 (All Options)

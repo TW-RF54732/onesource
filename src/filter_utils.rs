@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use globset::{Glob, GlobSet, GlobSetBuilder};
+use globset::{Glob, GlobMatcher};
 
-const BLACKLIST: &[&str] = &[
+pub const BLACKLIST: &[&str] = &[
     //Not in .gitignore:
     ".git",
     ".gitignore",
@@ -26,9 +26,79 @@ const BLACKLIST: &[&str] = &[
 ];
 
 pub struct FileFilter {
-    include: Option<GlobSet>,
-    exclude: Option<GlobSet>,
+    include: Option<PatternSet>,
+    exclude: Option<PatternSet>,
     no_blacklist: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FilterDecision {
+    Included,
+    BlockedByBlacklist { rule: String },
+    BlockedByExclude { rule: String },
+    NotIncludedByInclude { rule: String },
+}
+
+struct PatternSet {
+    patterns: Vec<String>,
+    matchers: Vec<(String, GlobMatcher)>,
+}
+
+impl PatternSet {
+    fn new(patterns: &str) -> Option<Self> {
+        let mut raw_patterns = Vec::new();
+        let mut matchers = Vec::new();
+
+        for pattern in patterns.split(',') {
+            let p = pattern.trim().replace('\\', "/");
+
+            if p.is_empty() {
+                continue;
+            }
+
+            let is_simple_name = !p.contains('/') && !p.contains('*') && !p.contains('.');
+            raw_patterns.push(p.clone());
+
+            if is_simple_name {
+                matchers.push((
+                    p.clone(),
+                    Glob::new(&format!("**/{}", p)).unwrap().compile_matcher(),
+                ));
+                matchers.push((
+                    p.clone(),
+                    Glob::new(&format!("**/{}/**", p))
+                        .unwrap()
+                        .compile_matcher(),
+                ));
+            } else {
+                let final_p = if p.ends_with('/') {
+                    format!("{}**", p)
+                } else {
+                    p.clone()
+                };
+                matchers.push((p, Glob::new(&final_p).unwrap().compile_matcher()));
+            }
+        }
+
+        if raw_patterns.is_empty() {
+            None
+        } else {
+            Some(Self {
+                patterns: raw_patterns,
+                matchers,
+            })
+        }
+    }
+
+    fn matched_rule(&self, path: &Path) -> Option<&str> {
+        self.matchers
+            .iter()
+            .find_map(|(raw, matcher)| matcher.is_match(path).then_some(raw.as_str()))
+    }
+
+    fn rules(&self) -> String {
+        self.patterns.join(",")
+    }
 }
 
 impl FileFilter {
@@ -40,66 +110,48 @@ impl FileFilter {
     /// 3. **Default**: If `include` is `None` (*), all non-excluded paths are KEPT.
     pub fn new(include: Option<&str>, exclude: Option<&str>, no_blacklist: bool) -> Self {
         Self {
-            include: include.and_then(Self::build_set),
-            exclude: exclude.and_then(Self::build_set),
+            include: include.and_then(PatternSet::new),
+            exclude: exclude.and_then(PatternSet::new),
             no_blacklist,
         }
     }
 
-    fn build_set(patterns: &str) -> Option<GlobSet> {
-        // Use .gitignore logic
-        let mut builder = GlobSetBuilder::new();
-        let mut has_pattern = false;
-
-        for pattern in patterns.split(',') {
-            let p = pattern.trim().replace('\\', "/");
-
-            if p.is_empty() {
-                continue;
-            }
-            let is_simple_name = !p.contains('/') && !p.contains('*') && !p.contains('.');
-
-            if is_simple_name {
-                builder.add(Glob::new(&format!("**/{}", p)).unwrap());
-                builder.add(Glob::new(&format!("**/{}/**", p)).unwrap());
-            } else {
-                let final_p = if p.ends_with('/') {
-                    format!("{}**", p)
-                } else {
-                    p
-                };
-                builder.add(Glob::new(&final_p).unwrap());
-            }
-            has_pattern = true;
-        }
-
-        if has_pattern {
-            Some(builder.build().expect("GlobSet compile fail"))
-        } else {
-            None
-        }
+    pub fn is_match(&self, path: &Path) -> bool {
+        matches!(self.explain(path), FilterDecision::Included)
     }
 
-    pub fn is_match(&self, path: &Path) -> bool {
-        if !self.no_blacklist
-            && path.components().any(|c| {
-                c.as_os_str()
-                    .to_str()
-                    .is_some_and(|s| BLACKLIST.contains(&s))
-            })
-        {
-            return false;
+    pub fn explain(&self, path: &Path) -> FilterDecision {
+        let blacklist_match = path.components().find_map(|c| {
+            c.as_os_str()
+                .to_str()
+                .filter(|s| BLACKLIST.contains(s))
+                .map(str::to_string)
+        });
+        if !self.no_blacklist {
+            if let Some(rule) = blacklist_match {
+                return FilterDecision::BlockedByBlacklist { rule };
+            }
         }
 
         if let Some(ref ex_set) = self.exclude {
-            if ex_set.is_match(path) {
-                return false;
+            if let Some(rule) = ex_set.matched_rule(path) {
+                return FilterDecision::BlockedByExclude {
+                    rule: rule.to_string(),
+                };
             }
         }
 
         match &self.include {
-            Some(inc_set) => inc_set.is_match(path),
-            None => true,
+            Some(inc_set) => {
+                if inc_set.matched_rule(path).is_some() {
+                    FilterDecision::Included
+                } else {
+                    FilterDecision::NotIncludedByInclude {
+                        rule: inc_set.rules(),
+                    }
+                }
+            }
+            None => FilterDecision::Included,
         }
     }
 }
