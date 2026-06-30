@@ -8,7 +8,7 @@ use clap::{ArgMatches, Args as ClapArgs, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
-#[command(name = "onesource", author = "lolLeo", version = "3.2.0")]
+#[command(name = "onesource", author = "lolLeo", version = "3.2.1")]
 pub struct Args {
     // File setting
     #[serde(skip)]
@@ -420,7 +420,7 @@ impl Args {
 
     pub fn sorted_profiles(config_doc: &ConfigDocument) -> Vec<(&String, &ProfileConfig)> {
         let mut profiles: Vec<_> = config_doc.profiles.iter().collect();
-        profiles.sort_by(|(left, _), (right, _)| left.cmp(right));
+        profiles.sort_by_key(|(name, _)| *name);
         profiles
     }
 
