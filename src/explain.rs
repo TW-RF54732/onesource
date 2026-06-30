@@ -217,6 +217,7 @@ pub fn print_reports(reports: &[ExplainReport]) {
             println!();
         }
 
+        println!("----------------");
         println!("{}", report.path.display());
         println!("----------------");
         println!();
