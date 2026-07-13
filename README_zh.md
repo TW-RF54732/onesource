@@ -1,69 +1,18 @@
 # onesource
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Built with Rust](https://img.shields.io/badge/built%20with-Rust-orange?logo=rust)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
-[![GitHub Stars](https://img.shields.io/github/stars/TW-RF54732/onesource?style=social)](https://github.com/TW-RF54732/onesource/stargazers)
 
-[English README 英文文檔](https://github.com/TW-RF54732/onesource/blob/683ce72337df6ef7ab3df7f7e37d8523344a14b2/README.md)
+[English](README.md)
 
-> 將你的整個專案打包成單一個上下文檔案 — 然後貼給你的 AI。  
-> 不需要 Node.js。不需要 Python。不需要雲端。只需下載並執行。
+把一個專案整理成一份可直接交給 AI 的上下文檔案。`onesource` 會輸出經過篩選的目錄樹，將每個選取的文字檔包在清楚的 `<file path="…">` 區塊中，並顯示預估 token 數。
 
-```text
-$ onesource ./my-project
-my-project/
-├── src/
-│   ├── main.rs
-│   └── utils.rs
-└── Cargo.toml
+它完全在本機執行。預設會遵守 ignore 規則，並略過常見的敏感檔案、產生檔與依賴目錄。
 
-  + src/main.rs
-  + src/utils.rs
-  + Cargo.toml
-======File processing completed======
-Files Processed: 3
-Output saved to: /home/user/my-project/{project name}.onesource
-```
+![onesource demo](medias/demo.gif)
 
------
-
-## 故事背景 (The Story)
-
-我是一名大一資管系學生。我經常把東西弄壞，然後請 AI 幫我修復 — 這基本上就是我的工作流程。
-
-問題是：每次我需要 Claude 或 ChatGPT 幫忙時，我都要花五分鐘手動複製檔案，一個一個貼上，解釋資料夾結構，漏掉一個檔案，再貼一次... 在 AI 看到我的 bug 之前，我已經感到很挫折了。
-
-所以我寫了一個簡單的 Python 腳本，把所有東西都倒進一個檔案裡。它很有效，我每天都在用。
-
-然後我想 — *如果其他人也能用這個呢？* 我用 Rust 重新寫了一遍。純手工。身為一個大一新生。這抹殺了我很多不知道自己擁有的腦細胞。
-
-這是同類工具中最強大的嗎？不是。像 [code2prompt](https://github.com/mufeedvh/code2prompt) 這樣的工具已經存在，而且非常棒。但它們假設你知道自己在做什麼。`onesource` 假設你只想要它能直接運作。
-
-如果你是學生、初學者，或者只是想要一個極度簡單的方法把專案餵給 AI 的人 — 這個工具就是為你準備的。
-
------
-
-## 為什麼選擇 onesource？ (Why onesource?)
-
-市面上已經有幾個類似的工具了。這是一個誠實的比較：
-
-| | **onesource** | **Repomix** | **Gitingest** | **code2prompt** |
-|---|---|---|---|---|
-| **安裝設定** | 下載並執行 (單行指令安裝) | 需要 Node.js + npm | 網頁瀏覽器 | 從原始碼編譯 |
-| **隱私** | 100% 本地端 | 100% 本地端 | 你的程式碼會上傳到他們的伺服器 | 100% 本地端 |
-| **依賴套件** | 零 | `node_modules` (200MB+) | 無 (它是一個網站) | 零 |
-| **解除安裝** | 刪除檔案。搞定。 | 祝你處理 `node_modules` 順利 | 不適用 | 刪除檔案 |
-| **自動安裝腳本** | 有 — 所有平台只需一行指令 | 無 | 無 | 無 |
-| **離線使用** | 可以 | 可以 | 否 | 可以 |
-
-  * **對比 Repomix：** 它是一個很棒的工具，但我不想為了一個打包文字檔的功能去安裝 JavaScript 執行環境和 200MB 的依賴套件。
-  * **對比 Gitingest：** 把你私人的、做到一半有 bug 的程式碼推送到雲端進行分析感覺不對勁。這裡的所有東西都會留在你的機器上。
-  * **對比 code2prompt：** 說實話 — code2prompt 很強大且旨在解決相同的問題。如果你對 Rust 工具鏈很熟悉且需要進階功能，去試試看它。如果你只想要一行指令就能安裝且不會干擾你的工具，請留在這裡。
-
------
-
-## 安裝方式 (Installation)
+## 安裝
 
 ### macOS / Linux
 
@@ -71,175 +20,149 @@ Output saved to: /home/user/my-project/{project name}.onesource
 curl -sSL https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.sh | bash
 ```
 
-就這樣。`onesource` 將可以在整個系統中使用。
+安裝程式會下載最新 release，並把 `onesource` 安裝到 `/usr/local/bin`；可能會要求 `sudo` 權限。
 
-### Windows (PowerShell)
+### Windows（PowerShell）
 
 ```powershell
 irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex
 ```
 
-### 更新 (Updating)
+安裝後請重新開啟終端機，讓更新後的使用者 `PATH` 生效。
 
-第一次安裝後，不需要再找安裝腳本，直接執行：
+### 可攜式執行檔
+
+從 [Releases](https://github.com/TW-RF54732/onesource/releases) 下載對應平台的執行檔後，直接執行：
+
+```bash
+./onesource          # macOS / Linux
+.\onesource.exe      # Windows PowerShell
+```
+
+### 更新
 
 ```bash
 onesource update
 ```
 
-這會下載最新 release，並覆蓋目前正在執行的 `onesource` 本體位置；全域安裝和免安裝可攜式執行檔都適用。
+此指令會下載最新的 GitHub release，並取代目前執行中的 `onesource` 執行檔。
 
-這會安裝最新版本並自動將其加入你的 PATH 中。之後請重新啟動你的終端機。
+## 快速開始
 
-### 免安裝可攜式執行檔 (Portable Binary)
-
-不想安裝任何東西？從 [Releases 頁面](https://github.com/TW-RF54732/onesource/releases) 取得執行檔，丟進你的專案資料夾，然後直接執行它：
-
-```bash
-./onesource          # macOS / Linux
-.\onesource.exe      # Windows
-```
-
------
-
-## 使用方法 (Usage)
-
-在你的專案目錄內執行 `onesource`：
-
-```bash
-onesource [PATH] [OPTIONS]
-```
-
-如果你不帶任何參數執行它，它會掃描當前目錄，遵守你的 `.gitignore` 規則，並將所有內容寫入 `{project name}.onesource`。
-
-### 常見工作流程
-
-**直接打包所有東西並存成檔案：**
+在專案目錄中執行：
 
 ```bash
 onesource
 ```
 
-**只打包你的 Rust 原始碼檔案：**
-
-```bash
-onesource -i "*.rs"
-```
-
-**排除特定資料夾：**
-
-```bash
-onesource -x "tests/,legacy/"
-```
-
-**預覽會被打包的內容，而不實際寫入任何檔案：**
-
-```bash
-onesource --dry-run
-```
-
-**將目錄結構樹與打包內容分開顯示：**  
-*(適合用來給 AI 完整的結構上下文，但只發送特定的檔案給它)*
-
-```bash
-onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
-```
-
-**解釋特定路徑為什麼會被包含或擋下：**
-
-```bash
-onesource explain Cargo.toml README.md -i "*.rs" --tree-include "*.rs,*.toml,*.md"
-```
-
------
-
-## 使用 `explain` 除錯
-
-當某個檔案或資料夾沒有出現在你預期的位置時，可以用 `explain` 查原因。它會使用和一般執行相同的 profile 與掃描參數，並分開顯示 content 與 tree 的判斷結果。
-
-```bash
-onesource explain Cargo.toml README.md
-onesource explain .env --no-blacklist
-onesource explain Cargo.toml -p backend -i "*.rs" --tree-include "*.rs,*.toml"
-```
-
-輸出範例：
+它會掃描目前目錄，產生 `專案名稱.onesource`。檔案內容會先列出目錄樹，再接續選取檔案的內容。
 
 ```text
-Cargo.toml
-----------------
+my-project/
+├── Cargo.toml
+└── src/
+    └── main.rs
 
-Content
-  Result  not included by include
-  Rule    include = *.rs
+<file path="Cargo.toml">
+[package]
+name = "my-project"
+</file>
 
-Tree
-  Result  included
+<file path="src/main.rs">
+fn main() {
+    println!("Hello!");
+}
+</file>
 ```
 
-注意：
-- `explain` 接收的是實際路徑，不是 glob pattern。請使用 `onesource explain install.sh`，不要用 `onesource explain "*.sh"`。
-- 它只會解釋你明確輸入的路徑，不會把隱藏或敏感的 skipped path 全部列出來。
-- `--profile`、`--no-config`、`--include`、`--exclude`、`--no-ignore`、`--no-blacklist`、`--tree-include`、`--tree-exclude`、`--tree-no-ignore`、`--no-tree`、`--max-size` 等掃描相關參數都可以搭配 `explain` 使用。
-
------
-
-## 所有選項 (All Options)
-
-| 標籤 (Flag) | 縮寫 (Short) | 預設值 (Default) | 描述 (Description) |
-|---|---|---|---|
-| `path` | — | `.` (當前目錄) | 要掃描的目標目錄 |
-| `--output-path` | `-o` | `{project name}.onesource` | 輸出檔案路徑 |
-| `--include` | `-i` | 所有檔案 | 只包含符合這些逗號分隔 glob 模式的檔案 |
-| `--exclude` | `-x` | 無 | 排除符合這些逗號分隔 glob 模式的檔案。衝突時優先於 `--include`。 |
-| `--no-ignore` | — | false | 忽略 `.gitignore` 規則並掃描所有內容 |
-| `--no-blacklist` | — | false | 停用安全性黑名單 (允許掃描 `.git/`, `node_modules/` 等) |
-| `--tree-include` | `--ti` | 繼承 `-i` | 用於目錄樹的 Glob 過濾器 (啟用獨立的樹狀圖模式) |
-| `--tree-exclude` | `--tx` | 繼承 `-x` | 用於目錄樹的 Glob 排除器 |
-| `--tree-no-ignore` | — | false | 僅在樹狀檢視中忽略 `.gitignore` 規則 |
-| `--no-tree` | — | false | 在輸出中停用目錄結構樹 |
-| `--max-size` | `-m` | 500 (KB) | 跳過大於此大小的檔案 |
-| `--dry-run` | — | false | 預覽將被打包的檔案，但不寫入 |
-| `--save` | — | false | 將本次明確輸入的參數存回目前啟用的 Profile |
-| `--replace` | — | false | 儲存時以本次參數重建 Profile，而不是融合更新 |
-| `--desc` | — | 無 | 儲存 Profile 描述 |
-| `--show-arg` | — | false | 印出解析後的參數，主要用於除錯 |
-| `--profile` | `-p` | `default` | 載入指定的已儲存 Profile |
-| `--no-config` | — | false | 忽略 `.onesourcerc`，只使用 CLI 參數 |
-| `--copy` | `-c` | false | 直接複製輸出至剪貼簿 (不會有任何檔案被創建或寫入) |
-
-
------
-
-## 設定檔 (Configuration File)
-
-Profile 會存在專案目錄的 `.onesourcerc`。使用 `-p/--profile` 選擇目前啟用的 Profile；`--save` 會把本次明確輸入的參數存回該 Profile。預設是融合更新，未指定的欄位會保留；加上 `--replace` 則只保留本次輸入的參數。
-
-**優先順序：** CLI 參數 → 指定的 Profile → 內部預設值
+常用指令：
 
 ```bash
-onesource -p backend -i "*.rs" -x "target/" --save
+# 只打包 Rust 原始碼。
+onesource -i "*.rs"
+
+# 打包指定目錄。
+onesource ./my-project
+
+# 排除產生檔或舊程式碼。多個模式以逗號分隔。
+onesource -x "dist/,legacy/,*.log"
+
+# 預覽選取檔案與 token 數，不建立輸出檔。
+onesource --dry-run
+
+# 將產生結果複製到剪貼簿，不建立檔案。
+onesource --copy
+
+# 指定輸出位置；相對路徑以目前終端機所在目錄為準。
+onesource -o context/bug-report.onesource
+```
+
+## 會包含哪些內容？
+
+`onesource` 只會打包文字檔。預設行為為：
+
+- 套用標準 ignore 篩選，包括 `.gitignore` 規則；
+- 跳過大於 500 KB 的檔案；
+- 跳過常見的敏感檔案、產生檔、依賴與編輯器路徑：`.env`、`.git`、`.onesourcerc`、`node_modules`、`target`、虛擬環境與常見 IDE／快取目錄；
+- 隱藏檔預設會被掃描，除非被其他規則排除。
+
+需要改變行為時，請謹慎使用以下選項：
+
+```bash
+# 不套用內容掃描的標準 ignore 篩選。
+onesource --no-ignore
+
+# 關閉內建安全黑名單；分享前請確認輸出內容。
+onesource --no-blacklist
+
+# 把單一檔案上限提高到 2 MB。
+onesource --max-size 2048
+```
+
+`--exclude` 永遠優先於 `--include`。模式是以逗號分隔的 glob；例如 `tests/` 這類目錄模式會套用到該目錄底下所有項目。
+
+## 目錄樹控制
+
+預設情況下，目錄樹和檔案內容使用相同的篩選規則。當你只想傳送少量檔案、但仍要讓 AI 看到較完整的結構時，可以為目錄樹指定獨立規則：
+
+```bash
+# 只傳送 Rust 檔，但在樹中顯示 Rust、TOML 和 Markdown 檔。
+onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
+
+# 輸出中不要包含目錄樹。
+onesource --no-tree
+
+# 只有目錄樹不套用標準 ignore 篩選。
+onesource --tree-no-ignore
+```
+
+## 可重複使用的 Profile
+
+可將常用掃描設定存到目標專案根目錄的 `.onesourcerc`。設定優先順序為：
+
+```text
+命令列選項 → 選取的 profile → 內建預設值
+```
+
+```bash
+# 將本次明確輸入的設定存到預設 profile。
+onesource -i "*.rs,*.toml" -x "target/" --save
+
+# 建立並使用具名 profile。
+onesource profile create backend -i "src/**/*.rs,Cargo.toml" --desc "Rust backend"
 onesource -p backend
+
+# 檢視或管理 profile。
 onesource profile list
 onesource profile show backend
-onesource -p backend -i "src/**/*.py" --save --replace
-```
-
-Profile 管理指令：
-
-```bash
-onesource profile list
-onesource profile show backend
-onesource profile create backend -i "*.rs" --desc "Rust backend"
 onesource profile update backend -x "*.db"
-onesource profile update backend -i "src/**/*.py" --replace
 onesource profile rename backend api
 onesource profile delete api
 ```
 
-`profile ls` 和 `profile rm` 仍可作為 `profile list` 與 `profile delete` 的短別名使用。
+`--save` 只會合併這次命令列明確傳入的選項。加入 `--replace` 可用這次選項完整重建目前 profile；`profile update --replace` 對指定 profile 的行為相同。
 
-範例 `.onesourcerc`：
+`.onesourcerc` 範例：
 
 ```json
 {
@@ -250,95 +173,63 @@ onesource profile delete api
       "max_size": 300
     },
     "backend": {
-      "description": "專注於後端邏輯",
-      "include": "src/backend/*,Cargo.toml"
+      "description": "後端實作",
+      "include": "src/backend/**,Cargo.toml"
     }
   }
 }
 ```
 
-> 注意：`path`、`--dry-run`、`--save`、`--show-arg` 和剪貼簿行為只屬於 CLI 參數。`.onesourcerc` 是設定輸入，預設打包專案檔案時會被安全性黑名單略過。
+單次執行想忽略 `.onesourcerc`，請加上 `--no-config`。腳本可使用 `profile list --json` 與 `profile show NAME --json` 取得 JSON。
 
------
+## 找出檔案為何沒有出現
 
-## 輸出內容長怎樣 (What the output looks like)
-
-```text
-my-project/
-├── src/
-│   └── main.rs
-└── Cargo.toml
-
-<file path="src/main.rs">
-fn main() {
-    println!("Hello, world!");
-}
-</file>
-
-<file path="Cargo.toml">
-[package]
-name = "my-project"
-version = "0.1.0"
-</file>
-```
-
-把這些貼到 Claude、ChatGPT 或 Gemini 中。類似 XML 的標籤能幫助 AI 清楚理解檔案的邊界。
-
------
-
-## 開發藍圖 (Roadmap)
-
-這個專案最初是一個靠感覺寫出來的 Python 腳本。現在它是一個我自己親手寫的、而且（大部分）能看懂的 Rust 執行檔。接下來的計畫如下：
-
-**第一階段：核心基礎 (修復與必備功能)**
-
-  * [x] 支援隱藏檔案 — 準確讀取 `.github/` 等，同時安全地忽略 `.git/`、`.env`。
-  * [x] 複製到剪貼簿 (`-c` 標籤) — 寫入剪貼簿而不是檔案。
-  * [x] Token 計數器 — 在你貼上之前估算輸出會使用多少 tokens。
-
-**第二階段：進階工作流程 (差異化功能)**
-
-  * [x] Profile 管理 — 支援儲存、載入、列出、顯示、建立、更新、覆蓋、改名與刪除 Profile。
-  * [ ] Git Diff 整合 — 只對修改過的檔案進行增量打包，節省 LLM 的上下文空間。
-
-**第三階段：生態系統與整合**
-
-  * [ ] Python 綁定 — 在 Python AI Agents 或 CI/CD 流程中直接匯入 `onesource`。
-  * [ ] VSCode 擴充套件 — 在編輯器中一鍵打包上下文。
-  * [ ] 更多安裝選項 (Homebrew, Scoop, Cargo)。
-
-如果你有任何想法或遇到 bug，歡迎開啟 Issue。我是個學生 — 我有時間，而且我真的會看。
-
------
-
-## 參與貢獻 (Contributing)
-
-歡迎發起 Pull requests。程式碼庫很小 (大約 500 行 Rust 程式碼，分佈在 5 個檔案中)，瀏覽起來並不可怕：
-
-```text
-src/
-├── main.rs         # 進入點，參數解析，主要流程
-├── configs.rs      # CLI 參數 + .onesourcerc 設定 (clap + serde)
-├── filter_utils.rs # 基於 Glob 的包含/排除邏輯
-├── tree_utils.rs   # 目錄結構樹建立器和列印器
-└── io_utils.rs     # MultiWriter (同時寫入檔案 + 標準輸出)
-```
-
-要在本地端編譯：
+若某個路徑沒有出現在預期位置，使用 `explain`。它會分別顯示內容和目錄樹的判斷，包含黑名單、ignore、include/exclude、檔案大小、二進位檔與找不到路徑等結果。
 
 ```bash
-git clone https://github.com/TW-RF54732/onesource.git
-cd onesource
+onesource explain Cargo.toml README.md
+onesource explain .env --no-blacklist
+onesource explain Cargo.toml -p backend -i "*.rs" --tree-include "*.rs,*.toml"
+```
+
+請傳入實際路徑，不是 glob：使用 `onesource explain src/main.rs`，不要使用 `onesource explain "*.rs"`。`explain` 可使用和一般執行相同的掃描相關選項，但不會產生輸出、不會儲存 profile，也不會複製資料。
+
+## 指令參考
+
+```text
+onesource [OPTIONS] [PATH]
+onesource profile <COMMAND>
+onesource explain [OPTIONS] <PATHS...>
+onesource update
+```
+
+| 選項 | 縮寫 | 預設值 | 用途 |
+|---|---|---:|---|
+| `--output-path PATH` | `-o` | `<project>.onesource` | 輸出檔位置 |
+| `--include PATTERNS` | `-i` | 所有符合條件的檔案 | 逗號分隔的 include glob |
+| `--exclude PATTERNS` | `-x` | 無 | 逗號分隔的 exclude glob |
+| `--no-ignore[=BOOL]` | — | `false` | 關閉內容的標準 ignore 篩選 |
+| `--no-blacklist[=BOOL]` | — | `false` | 關閉內建安全黑名單 |
+| `--max-size KB` | `-m` | `500` | 每個內容檔案的大小上限 |
+| `--tree-include PATTERNS` | `--ti` | 繼承 include | 僅用於目錄樹的 include glob |
+| `--tree-exclude PATTERNS` | `--tx` | 繼承 exclude | 僅用於目錄樹的 exclude glob |
+| `--tree-no-ignore[=BOOL]` | — | `false` | 關閉目錄樹的標準 ignore 篩選 |
+| `--no-tree[=BOOL]` | — | `false` | 不輸出目錄樹 |
+| `--dry-run` | — | `false` | 預覽檔案和 token，不寫入 |
+| `--copy` | `-c` | `false` | 複製結果到剪貼簿，不建立檔案 |
+| `--profile NAME` | `-p` | `default` | 載入已儲存的 profile |
+| `--save` | — | `false` | 將明確選項存到目前 profile |
+| `--replace` | — | `false` | 儲存時取代而非合併 |
+| `--desc TEXT` | — | 無 | 儲存時設定 profile 描述 |
+| `--no-config` | — | `false` | 不讀取 `.onesourcerc` |
+| `--show-arg[=BOOL]` | — | `false` | 印出已解析的參數以供除錯 |
+
+可執行 `onesource --help`、`onesource profile --help` 或 `onesource explain --help` 查看內建說明。
+
+## 從原始碼建置
+
+```bash
 cargo build --release
 ```
 
------
-
-## 授權條款 (License)
-
-MIT — 你想拿它做什麼都可以。
-
------
-
-*由一個厭倦了把檔案複製貼上到 ChatGPT 的大一新生製作。*  
-*如果這幫你省下了哪怕五分鐘的時間，給我一顆星星將對我意義重大。*
+編譯後的執行檔位於 `target/release/onesource`（Windows 為 `onesource.exe`）。
