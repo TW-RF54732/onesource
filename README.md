@@ -135,7 +135,7 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 # Do not include a tree in the result.
 onesource --no-tree
 
-# Let only the tree ignore standard ignore filters.
+# Override the inherited content ignore setting for only the tree.
 onesource --tree-no-ignore
 ```
 
@@ -216,7 +216,7 @@ onesource update
 | `--max-size KiB` | `-m` | `500` | Maximum size for each content file |
 | `--tree-include PATTERNS` | `--ti` | inherits include | Tree-only include globs |
 | `--tree-exclude PATTERNS` | `--tx` | inherits exclude | Tree-only exclude globs |
-| `--tree-no-ignore[=BOOL]` | — | `false` | Disable standard ignore filters for the tree |
+| `--tree-no-ignore[=BOOL]` | — | inherits `--no-ignore` | Override standard ignore filters for the tree |
 | `--no-tree[=BOOL]` | — | `false` | Omit the directory tree |
 | `--dry-run` | — | `false` | Preview files and the full-output token estimate without writing |
 | `--copy` | `-c` | `false` | Copy output to the clipboard instead of a file |

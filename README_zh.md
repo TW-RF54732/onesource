@@ -135,7 +135,7 @@ onesource -i "*.rs" --tree-include "*.rs,*.toml,*.md"
 # 輸出中不要包含目錄樹。
 onesource --no-tree
 
-# 只有目錄樹不套用標準 ignore 篩選。
+# 只針對目錄樹覆寫從內容繼承的 ignore 設定。
 onesource --tree-no-ignore
 ```
 
@@ -216,7 +216,7 @@ onesource update
 | `--max-size KiB` | `-m` | `500` | 每個內容檔案的大小上限 |
 | `--tree-include PATTERNS` | `--ti` | 繼承 include | 僅用於目錄樹的 include glob |
 | `--tree-exclude PATTERNS` | `--tx` | 繼承 exclude | 僅用於目錄樹的 exclude glob |
-| `--tree-no-ignore[=BOOL]` | — | `false` | 關閉目錄樹的標準 ignore 篩選 |
+| `--tree-no-ignore[=BOOL]` | — | 繼承 `--no-ignore` | 覆寫目錄樹的標準 ignore 篩選 |
 | `--no-tree[=BOOL]` | — | `false` | 不輸出目錄樹 |
 | `--dry-run` | — | `false` | 預覽檔案和完整輸出 token 估算，不寫入 |
 | `--copy` | `-c` | `false` | 複製結果到剪貼簿，不建立檔案 |

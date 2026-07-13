@@ -81,7 +81,7 @@ pub struct Args {
         num_args = 0..=1,
         default_missing_value = "true",
         require_equals = true,
-        help = "Ignore .gitignore rules specifically for the tree view"
+        help = "Override ignore filtering for the tree view (defaults to --no-ignore)"
     )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tree_no_ignore: Option<bool>,
@@ -305,7 +305,7 @@ pub struct ProfileOptions {
         num_args = 0..=1,
         default_missing_value = "true",
         require_equals = true,
-        help = "Ignore .gitignore rules specifically for the tree view"
+        help = "Override ignore filtering for the tree view (defaults to no-ignore)"
     )]
     pub tree_no_ignore: Option<bool>,
     #[arg(short, long, help = "Max file size in KiB")]
@@ -752,6 +752,7 @@ impl Args {
 
     pub fn resolve(self) -> AppConfig {
         let target_path = self.path.unwrap_or_else(|| PathBuf::from("."));
+        let no_ignore = self.no_ignore.unwrap_or(false);
         let final_output_path = self.output_path.unwrap_or_else(|| {
             let folder_name = target_path
                 .canonicalize()
@@ -765,10 +766,10 @@ impl Args {
         AppConfig {
             path: target_path,
             output_path: final_output_path,
-            no_ignore: self.no_ignore.unwrap_or(false),
+            no_ignore,
             max_size: self.max_size.unwrap_or(500),
             no_tree: self.no_tree.unwrap_or(false),
-            tree_no_ignore: self.tree_no_ignore.unwrap_or(false),
+            tree_no_ignore: effective_tree_no_ignore(self.tree_no_ignore, no_ignore),
             no_blacklist: self.no_blacklist.unwrap_or(false),
             include: self.include,
             exclude: self.exclude,
@@ -778,6 +779,10 @@ impl Args {
             dry_run: self.dry_run,
         }
     }
+}
+
+fn effective_tree_no_ignore(tree_override: Option<bool>, no_ignore: bool) -> bool {
+    tree_override.unwrap_or(no_ignore)
 }
 
 #[cfg(test)]
@@ -908,5 +913,13 @@ mod tests {
         assert!(Args::validate_profile_name("backend/api").is_err());
         assert!(Args::validate_profile_name("backend api").is_err());
         assert!(Args::validate_profile_name("").is_err());
+    }
+
+    #[test]
+    fn tree_ignore_inherits_content_ignore_unless_overridden() {
+        assert!(effective_tree_no_ignore(None, true));
+        assert!(!effective_tree_no_ignore(None, false));
+        assert!(!effective_tree_no_ignore(Some(false), true));
+        assert!(effective_tree_no_ignore(Some(true), false));
     }
 }

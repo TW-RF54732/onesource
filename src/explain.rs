@@ -248,48 +248,53 @@ pub fn print_reports(reports: &[ExplainReport]) {
             println!();
         }
 
-        println!("----------------");
-        println!("{}", report.path.display());
-        println!("----------------");
-        println!();
+        println!("════════════════════════════════════════");
+        println!(
+            "Path {}/{}: {}",
+            index + 1,
+            reports.len(),
+            report.path.display()
+        );
 
         if let Some(content) = &report.content {
+            println!("  Content:");
             if content.decision == ExplainDecision::NotFound {
-                print_decision("Result", &content.decision);
+                print_decision("    Result:", &content.decision);
                 continue;
             }
 
-            println!("Content");
-            print_decision("  Result", &content.decision);
+            print_decision("    Result:", &content.decision);
             print_rule(&content.decision);
-            println!();
         }
 
         if let Some(tree) = &report.tree {
-            println!("Tree");
-            print_decision("  Result", &tree.decision);
+            println!("  Tree:");
+            print_decision("    Result:", &tree.decision);
             print_rule(&tree.decision);
         }
+    }
+    if !reports.is_empty() {
+        println!("════════════════════════════════════════");
     }
 }
 
 fn print_decision(label: &str, decision: &ExplainDecision) {
-    println!("{}  {}", label, decision_text(decision));
+    println!("{} {}", label, decision_text(decision));
 }
 
 fn print_rule(decision: &ExplainDecision) {
     match decision {
-        ExplainDecision::BlockedByBlacklist { rule } => println!("  Rule    blacklist = {}", rule),
-        ExplainDecision::BlockedByExclude { rule } => println!("  Rule    exclude = {}", rule),
-        ExplainDecision::NotIncludedByInclude { rule } => println!("  Rule    include = {}", rule),
+        ExplainDecision::BlockedByBlacklist { rule } => println!("    Rule: blacklist = {}", rule),
+        ExplainDecision::BlockedByExclude { rule } => println!("    Rule: exclude = {}", rule),
+        ExplainDecision::NotIncludedByInclude { rule } => println!("    Rule: include = {}", rule),
         ExplainDecision::SkippedByMaxSize {
             max_kib,
             actual_bytes,
         } => println!(
-            "  Rule    max-size = {} KiB, actual = {} bytes",
+            "    Rule: max-size = {} KiB, actual = {} bytes",
             max_kib, actual_bytes
         ),
-        ExplainDecision::Unreadable { error } => println!("  Rule    read error = {}", error),
+        ExplainDecision::Unreadable { error } => println!("    Rule: read error = {}", error),
         _ => {}
     }
 }
