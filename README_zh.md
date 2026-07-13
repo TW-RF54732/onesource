@@ -87,7 +87,7 @@ onesource ./my-project
 # 排除產生檔或舊程式碼。多個模式以逗號分隔。
 onesource -x "dist/,legacy/,*.log"
 
-# 預覽選取檔案與 token 數，不建立輸出檔。
+# 預覽選取檔案與完整輸出 token 估算，不建立輸出檔。
 onesource --dry-run
 
 # 將產生結果複製到剪貼簿，不建立檔案。
@@ -99,12 +99,15 @@ onesource -o context/bug-report.onesource
 
 ## 會包含哪些內容？
 
-`onesource` 只會打包文字檔。預設行為為：
+`onesource` 會把不含 NUL byte 的檔案視為文字檔。預設行為為：
 
 - 套用標準 ignore 篩選，包括 `.gitignore` 規則；
-- 跳過大於 500 KB 的檔案；
-- 跳過常見的敏感檔案、產生檔、依賴與編輯器路徑：`.env`、`.git`、`.onesourcerc`、`node_modules`、`target`、虛擬環境與常見 IDE／快取目錄；
+- 跳過大於 500 KiB 的檔案；
+- 跳過常見的敏感檔案、產生檔、依賴與編輯器路徑：`.env`／`.env.*`、私鑰與 credential 檔、`*.onesource`、`.git`、`.onesourcerc`、`node_modules`、`target`、虛擬環境與常見 IDE／快取目錄；
 - 隱藏檔預設會被掃描，除非被其他規則排除。
+
+本次指定的輸出檔永遠不會被掃回內容或目錄樹，即使使用 `--no-blacklist` 也一樣。非 UTF-8 檔案會以 replacement character 轉換並顯示警告，不會再靜默改寫內容。
+指向掃描根目錄外的 symbolic link 可出現在結構樹中，但不會讀取或附上其目標內容。
 
 需要改變行為時，請謹慎使用以下選項：
 
@@ -115,15 +118,15 @@ onesource --no-ignore
 # 關閉內建安全黑名單；分享前請確認輸出內容。
 onesource --no-blacklist
 
-# 把單一檔案上限提高到 2 MB。
+# 把單一檔案上限提高到 2 MiB。
 onesource --max-size 2048
 ```
 
-`--exclude` 永遠優先於 `--include`。模式是以逗號分隔的 glob；例如 `tests/` 這類目錄模式會套用到該目錄底下所有項目。
+`--exclude` 永遠優先於 `--include`。模式是以逗號分隔的 glob，不是完整的 gitignore syntax，因此不支援 `!pattern` 否定規則；例如 `tests/` 這類目錄模式會套用到該目錄底下所有項目。無效 glob 會回傳錯誤而不會 panic。
 
 ## 目錄樹控制
 
-預設情況下，目錄樹和檔案內容使用相同的篩選規則。當你只想傳送少量檔案、但仍要讓 AI 看到較完整的結構時，可以為目錄樹指定獨立規則：
+預設情況下，目錄樹和檔案內容共用黑名單、ignore 與 include/exclude 規則。檔案大小、binary 與 UTF-8 狀態只決定是否附上內容，不會把路徑從樹中移除。當你只想傳送少量檔案、但仍要讓 AI 看到較完整的結構時，可以為目錄樹指定獨立規則：
 
 ```bash
 # 只傳送 Rust 檔，但在樹中顯示 Rust、TOML 和 Markdown 檔。
@@ -184,7 +187,7 @@ onesource profile delete api
 
 ## 找出檔案為何沒有出現
 
-若某個路徑沒有出現在預期位置，使用 `explain`。它會分別顯示內容和目錄樹的判斷，包含黑名單、ignore、include/exclude、檔案大小、二進位檔與找不到路徑等結果。
+若某個路徑沒有出現在預期位置，使用 `explain`。它會分別顯示內容和目錄樹的判斷，包含本次輸出檔、掃描根目錄外路徑、黑名單、ignore、include/exclude、檔案大小、二進位檔、lossy UTF-8 與找不到路徑等結果。
 
 ```bash
 onesource explain Cargo.toml README.md
@@ -210,12 +213,12 @@ onesource update
 | `--exclude PATTERNS` | `-x` | 無 | 逗號分隔的 exclude glob |
 | `--no-ignore[=BOOL]` | — | `false` | 關閉內容的標準 ignore 篩選 |
 | `--no-blacklist[=BOOL]` | — | `false` | 關閉內建安全黑名單 |
-| `--max-size KB` | `-m` | `500` | 每個內容檔案的大小上限 |
+| `--max-size KiB` | `-m` | `500` | 每個內容檔案的大小上限 |
 | `--tree-include PATTERNS` | `--ti` | 繼承 include | 僅用於目錄樹的 include glob |
 | `--tree-exclude PATTERNS` | `--tx` | 繼承 exclude | 僅用於目錄樹的 exclude glob |
 | `--tree-no-ignore[=BOOL]` | — | `false` | 關閉目錄樹的標準 ignore 篩選 |
 | `--no-tree[=BOOL]` | — | `false` | 不輸出目錄樹 |
-| `--dry-run` | — | `false` | 預覽檔案和 token，不寫入 |
+| `--dry-run` | — | `false` | 預覽檔案和完整輸出 token 估算，不寫入 |
 | `--copy` | `-c` | `false` | 複製結果到剪貼簿，不建立檔案 |
 | `--profile NAME` | `-p` | `default` | 載入已儲存的 profile |
 | `--save` | — | `false` | 將明確選項存到目前 profile |
@@ -225,6 +228,8 @@ onesource update
 | `--show-arg[=BOOL]` | — | `false` | 印出已解析的參數以供除錯 |
 
 可執行 `onesource --help`、`onesource profile --help` 或 `onesource explain --help` 查看內建說明。
+
+輸出的 `<file path="…">` 是方便 AI 閱讀的 framing，不是完整 XML 或安全邊界。路徑屬性會被跳脫；有效 UTF-8 來源內容不做 delimiter escape，非 UTF-8 則依上述方式轉換。分享輸出前仍應審查內容與可能存在的提示注入。
 
 ## 從原始碼建置
 

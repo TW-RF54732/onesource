@@ -2,150 +2,221 @@ mod configs;
 mod explain;
 mod filter_utils;
 mod io_utils;
+mod scan;
 mod self_update;
 mod tree_utils;
 
-use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result};
 use clap::{CommandFactory, FromArgMatches};
-use ignore::WalkBuilder;
-use tiktoken_rs::cl100k_base;
+use tiktoken_rs::{cl100k_base, CoreBPE};
 
 use crate::configs::{AppConfig, Args, ProfileConfig};
 
 #[derive(Debug, Default)]
 struct FileStats {
-    file_count: u32,
-    total_tokens: usize,
+    file_count: usize,
+    skipped_count: usize,
+    estimated_output_tokens: usize,
 }
 
-fn generate_tree<W: Write>(args: &AppConfig, writer: &mut W) -> Result<()> {
-    let final_include = args.tree_include.as_deref().or(args.include.as_deref());
-    let final_exclude = args.tree_exclude.as_deref().or(args.exclude.as_deref());
-    let filter = filter_utils::FileFilter::new(final_include, final_exclude, args.no_blacklist);
-    let mut tree_root = tree_utils::Node::new(true);
-
-    let walker = WalkBuilder::new(&args.path)
-        .standard_filters(!args.tree_no_ignore)
-        .hidden(false)
-        .require_git(false)
-        .build();
-
-    for result in walker {
-        match result {
-            Ok(entry) => {
-                let rel_path = entry
-                    .path()
-                    .strip_prefix(&args.path)
-                    .unwrap_or(entry.path());
-                if !filter.is_match(rel_path) {
-                    continue;
-                }
-                let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
-                tree_root.insert_path(rel_path, is_dir);
-            }
-            Err(error) => {
-                eprintln!("Error walking tree: {}", error);
-            }
-        }
-    }
-    let root_name = args
-        .path
-        .canonicalize()
-        .ok()
-        .and_then(|p| p.file_name().map(|s| s.to_string_lossy().to_string()))
-        .unwrap_or_else(|| ".".into());
-
-    writeln!(writer, "{}/", root_name).context("Failed to write root name to tree")?;
-    tree_root
-        .print("", writer)
-        .context("Failed to print tree")?;
+fn write_counted<W: Write>(
+    writer: &mut W,
+    bpe: &CoreBPE,
+    value: &str,
+    stats: &mut FileStats,
+) -> Result<()> {
+    writer
+        .write_all(value.as_bytes())
+        .context("Failed to write generated output")?;
+    stats.estimated_output_tokens += bpe.encode_with_special_tokens(value).len();
     Ok(())
 }
 
-fn process_files<W: Write>(args: &AppConfig, writer: &mut W) -> Result<FileStats> {
-    let bpe = cl100k_base().context("Failed to load tokenizer")?;
-    let filter = filter_utils::FileFilter::new(
-        args.include.as_deref(),
-        args.exclude.as_deref(),
-        args.no_blacklist,
-    );
-    let walker = WalkBuilder::new(&args.path)
-        .standard_filters(!args.no_ignore)
-        .hidden(false)
-        .require_git(false)
-        .build();
-    let mut stats = FileStats::default();
+fn render_tree<W: Write>(
+    selection: &scan::ScanSelection,
+    writer: &mut W,
+    bpe: &CoreBPE,
+    stats: &mut FileStats,
+) -> Result<()> {
+    if let Some(tree) = &selection.tree {
+        write_counted(writer, bpe, tree, stats)?;
+    }
+    Ok(())
+}
 
-    for result in walker {
-        match result {
-            Ok(entry) => {
-                let rel_path = entry
-                    .path()
-                    .strip_prefix(&args.path)
-                    .unwrap_or(entry.path());
-                if !filter.is_match(rel_path) {
-                    continue;
+fn process_files<W: Write>(
+    args: &AppConfig,
+    selection: &scan::ScanSelection,
+    writer: &mut W,
+    bpe: &CoreBPE,
+    stats: &mut FileStats,
+) -> Result<()> {
+    for candidate in &selection.candidates {
+        match scan::inspect_file(&candidate.full_path, args.max_size) {
+            Ok(inspected) => {
+                let content_tokens = bpe.encode_with_special_tokens(&inspected.content).len();
+                stats.file_count += 1;
+                if inspected.lossy_utf8 {
+                    eprintln!(
+                        "[WARNING] {} is not valid UTF-8; replacement characters were used",
+                        candidate.rel_path.display()
+                    );
                 }
 
-                let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
-                if is_dir {
-                    continue;
-                }
+                let opening = format!(
+                    "<file path=\"{}\">\n",
+                    scan::escape_path_attribute(&candidate.rel_path)
+                );
+                write_counted(writer, bpe, &opening, stats)?;
+                write_counted(writer, bpe, &inspected.content, stats)?;
+                write_counted(writer, bpe, "\n</file>\n\n", stats)?;
 
-                let metadata = entry.metadata().ok();
-                let size_kb = metadata.map(|m| m.len() / 1024).unwrap_or(0);
-                if size_kb > args.max_size as u64 {
-                    continue;
-                }
-
-                let is_text_file = if let Ok(mut f) = File::open(entry.path()) {
-                    use std::io::Read;
-                    let mut buffer = [0; 1024];
-                    let n = f.read(&mut buffer).unwrap_or(0);
-                    !buffer[..n].contains(&0)
+                if args.dry_run {
+                    let suffix = if inspected.lossy_utf8 {
+                        ", lossy UTF-8"
+                    } else {
+                        ""
+                    };
+                    println!(
+                        "[EXPECT] {} ({} content tokens{})",
+                        candidate.rel_path.display(),
+                        content_tokens,
+                        suffix
+                    );
                 } else {
-                    false
-                };
-                if !is_text_file {
-                    continue;
-                }
-
-                if let Ok(bytes) = std::fs::read(entry.path()) {
-                    let content = String::from_utf8_lossy(&bytes);
-                    let tokens = bpe.encode_with_special_tokens(&content);
-                    let token_count = tokens.len();
-                    stats.total_tokens += token_count;
-                    stats.file_count += 1;
-
-                    if args.dry_run {
-                        println!("[EXPECT] {} ({} tokens)", rel_path.display(), token_count);
-                        continue;
-                    }
-
-                    writeln!(writer, "<file path=\"{}\">", rel_path.display())?;
-                    writeln!(writer, "{}", content)?;
-                    writeln!(writer, "</file>\n")?;
-                    println!("  + {} ({} tokens)", rel_path.display(), token_count);
+                    println!(
+                        "  + {} ({} content tokens)",
+                        candidate.rel_path.display(),
+                        content_tokens
+                    );
                 }
             }
-            Err(error) => {
-                eprintln!("Error processing file: {}", error);
+            Err(reason) => {
+                stats.skipped_count += 1;
+                let message = skip_reason_text(&reason);
+                if args.dry_run {
+                    println!("[SKIP] {} ({})", candidate.rel_path.display(), message);
+                }
+                if matches!(reason, scan::SkipReason::Unreadable(_)) {
+                    eprintln!(
+                        "[WARNING] Skipping {}: {}",
+                        candidate.rel_path.display(),
+                        message
+                    );
+                }
             }
         }
     }
 
-    if !args.dry_run {
-        writer.flush().context("Failed to flush writer")?;
-    }
+    writer.flush().context("Failed to flush generated output")?;
+    Ok(())
+}
 
+fn skip_reason_text(reason: &scan::SkipReason) -> String {
+    match reason {
+        scan::SkipReason::TooLarge {
+            max_kib,
+            actual_bytes,
+        } => format!("larger than {} KiB: {} bytes", max_kib, actual_bytes),
+        scan::SkipReason::Binary => "binary file".to_string(),
+        scan::SkipReason::Unreadable(error) => format!("unreadable: {}", error),
+    }
+}
+
+fn print_stats(stats: &FileStats) {
     println!("======File processing completed======");
     println!("Files Processed: {}", stats.file_count);
-    println!("Total Tokens: {}", stats.total_tokens);
+    println!("Files Skipped: {}", stats.skipped_count);
+    println!("Estimated Output Tokens: {}", stats.estimated_output_tokens);
+}
 
-    Ok(stats)
+fn persist_output<F>(output_path: &Path, render: F) -> Result<()>
+where
+    F: FnOnce(&mut BufWriter<&mut std::fs::File>) -> Result<()>,
+{
+    let parent = output_path.parent().unwrap_or_else(|| Path::new("."));
+    if !parent.is_dir() {
+        return Err(anyhow::anyhow!(
+            "Output directory does not exist: {}",
+            parent.display()
+        ));
+    }
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary_path = parent.join(format!(".onesource-tmp-{}-{}", std::process::id(), unique));
+    let mut temporary = std::fs::OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(&temporary_path)
+        .with_context(|| format!("Failed to create temporary output in {}", parent.display()))?;
+
+    let render_result = (|| -> Result<()> {
+        let mut writer = BufWriter::new(&mut temporary);
+        render(&mut writer)?;
+        writer.flush().context("Failed to flush temporary output")?;
+        drop(writer);
+        temporary
+            .sync_all()
+            .context("Failed to sync temporary output")
+    })();
+    drop(temporary);
+
+    if let Err(error) = render_result {
+        let _ = std::fs::remove_file(&temporary_path);
+        return Err(error);
+    }
+
+    replace_output(&temporary_path, output_path).map_err(|error| {
+        let _ = std::fs::remove_file(&temporary_path);
+        anyhow::anyhow!(
+            "Failed to replace output file {}: {}",
+            output_path.display(),
+            error
+        )
+    })?;
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn replace_output(temporary: &Path, output: &Path) -> std::io::Result<()> {
+    std::fs::rename(temporary, output)
+}
+
+#[cfg(windows)]
+fn replace_output(temporary: &Path, output: &Path) -> std::io::Result<()> {
+    if !output.exists() {
+        return std::fs::rename(temporary, output);
+    }
+
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let backup = output
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join(format!(
+            ".onesource-backup-{}-{}",
+            std::process::id(),
+            unique
+        ));
+    std::fs::rename(output, &backup)?;
+    match std::fs::rename(temporary, output) {
+        Ok(()) => {
+            let _ = std::fs::remove_file(backup);
+            Ok(())
+        }
+        Err(error) => {
+            let _ = std::fs::rename(backup, output);
+            Err(error)
+        }
+    }
 }
 
 fn format_field<T: std::fmt::Display>(value: &Option<T>) -> String {
@@ -363,24 +434,24 @@ fn main() -> Result<()> {
     }
 
     let app_config = args.resolve();
+    let selection = scan::build_selection(&app_config)?;
+    let bpe = cl100k_base().context("Failed to load tokenizer")?;
+    let mut stats = FileStats {
+        skipped_count: selection.walk_errors,
+        ..FileStats::default()
+    };
 
     if app_config.dry_run {
         println!("\n[DRY RUN MODE] Previews only, no files will be written.\n");
 
-        if !app_config.no_tree {
-            generate_tree(&app_config, &mut std::io::stdout())?;
-        }
+        render_tree(&selection, &mut std::io::stdout(), &bpe, &mut stats)?;
 
         let mut sink = std::io::sink();
-        process_files(&app_config, &mut sink)?;
-
-        let full_output_path = std::env::current_dir()
-            .map(|dir| dir.join(&app_config.output_path))
-            .unwrap_or_else(|_| app_config.output_path.clone());
+        process_files(&app_config, &selection, &mut sink, &bpe, &mut stats)?;
 
         println!(
             "Dry run finished. If executed, file would be saved at: {}",
-            full_output_path.display()
+            selection.output_path.display()
         );
         if app_config.copy {
             println!("[WARNING] NO COPY WAS MADE WHILE DRY RUN")
@@ -390,45 +461,37 @@ fn main() -> Result<()> {
             "Failed to initialize clipboard. Hint: Try running without -c flag to save to file instead",
         )?;
 
-        if !app_config.no_tree {
-            let mut stdout = std::io::stdout();
-            let mut multi_writer = io_utils::tee(&mut clipboard_writer, &mut stdout);
-            generate_tree(&app_config, &mut multi_writer)?;
-        }
-        process_files(&app_config, &mut clipboard_writer)?;
+        let mut stdout = std::io::stdout();
+        let mut multi_writer = io_utils::tee(&mut clipboard_writer, &mut stdout);
+        render_tree(&selection, &mut multi_writer, &bpe, &mut stats)?;
+        process_files(
+            &app_config,
+            &selection,
+            &mut clipboard_writer,
+            &bpe,
+            &mut stats,
+        )?;
 
         clipboard_writer
             .flush()
             .context("Failed to copy to clipboard")?;
         println!("Output copied to clipboard successfully!");
     } else {
-        let file = File::create(&app_config.output_path).with_context(|| {
-            format!(
-                "Failed to create output file: {}",
-                app_config.output_path.display()
-            )
-        })?;
-        let mut writer = BufWriter::new(file);
-
-        let abs_path = app_config
-            .output_path
-            .canonicalize()
-            .unwrap_or_else(|_| app_config.output_path.clone());
-
-        let path_str = abs_path.display().to_string();
-        let abs_path_display = path_str.strip_prefix(r"\\?\").unwrap_or(&path_str);
-
-        if !app_config.no_tree {
+        persist_output(&selection.output_path, |writer| {
             let mut stdout = std::io::stdout();
-            let mut multi_writer = io_utils::tee(&mut writer, &mut stdout);
-            generate_tree(&app_config, &mut multi_writer)?;
-        }
+            let mut multi_writer = io_utils::tee(&mut *writer, &mut stdout);
+            render_tree(&selection, &mut multi_writer, &bpe, &mut stats)?;
+            process_files(&app_config, &selection, writer, &bpe, &mut stats)
+        })?;
 
-        process_files(&app_config, &mut writer)?;
-
-        writer.flush().context("Failed to flush output file")?;
-        println!("Output saved to: {}", abs_path_display);
+        let path_str = selection.output_path.display().to_string();
+        println!(
+            "Output saved to: {}",
+            path_str.strip_prefix(r"\\?\").unwrap_or(&path_str)
+        );
     }
+
+    print_stats(&stats);
 
     if is_show_arg {
         println!("======ARGS======");
@@ -436,4 +499,51 @@ fn main() -> Result<()> {
         println!("======Others======");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod main_tests {
+    use super::*;
+    use std::fs;
+
+    fn temp_dir(name: &str) -> std::path::PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("onesource-main-{}-{}", name, unique));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn failed_render_preserves_previous_output() {
+        let dir = temp_dir("preserve-output");
+        let output = dir.join("result.onesource");
+        fs::write(&output, "previous").unwrap();
+
+        let result = persist_output(&output, |writer| {
+            writer.write_all(b"partial replacement")?;
+            Err(anyhow::anyhow!("intentional render failure"))
+        });
+
+        assert!(result.is_err());
+        assert_eq!(fs::read_to_string(&output).unwrap(), "previous");
+        assert_eq!(fs::read_dir(dir).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn successful_render_replaces_previous_output() {
+        let dir = temp_dir("replace-output");
+        let output = dir.join("result.onesource");
+        fs::write(&output, "previous").unwrap();
+
+        persist_output(&output, |writer| {
+            writer.write_all(b"replacement")?;
+            Ok(())
+        })
+        .unwrap();
+
+        assert_eq!(fs::read_to_string(output).unwrap(), "replacement");
+    }
 }

@@ -87,7 +87,7 @@ onesource ./my-project
 # Exclude generated or legacy paths. Multiple patterns are comma-separated.
 onesource -x "dist/,legacy/,*.log"
 
-# Preview selected files and token counts without creating an output file.
+# Preview selected files and the full-output token estimate without creating an output file.
 onesource --dry-run
 
 # Copy the generated context to the clipboard instead of creating a file.
@@ -99,12 +99,15 @@ onesource -o context/bug-report.onesource
 
 ## What is included?
 
-`onesource` only packages text files. By default it:
+`onesource` treats files without a NUL byte as text. By default it:
 
 - follows standard ignore filters, including `.gitignore` rules;
-- skips files larger than 500 KB;
-- skips common sensitive, generated, dependency, and editor paths: `.env`, `.git`, `.onesourcerc`, `node_modules`, `target`, virtual environments, and common IDE/cache directories;
+- skips files larger than 500 KiB;
+- skips common sensitive, generated, dependency, and editor paths: `.env`/`.env.*`, private-key and credential files, `*.onesource`, `.git`, `.onesourcerc`, `node_modules`, `target`, virtual environments, and common IDE/cache directories;
 - includes hidden files unless another rule excludes them.
+
+The current output file is always excluded from both content and the tree, even with `--no-blacklist`. Non-UTF-8 files are converted with replacement characters and produce a visible warning instead of being changed silently.
+Symbolic links that point outside the scan root may appear in the structural tree, but their target content is never read or attached.
 
 Use these options deliberately when you need different behavior:
 
@@ -115,15 +118,15 @@ onesource --no-ignore
 # Disable the built-in safety blacklist. Review the resulting context before sharing it.
 onesource --no-blacklist
 
-# Increase the per-file limit to 2 MB.
+# Increase the per-file limit to 2 MiB.
 onesource --max-size 2048
 ```
 
-`--exclude` always wins over `--include`. Patterns are comma-separated globs; directory patterns such as `tests/` apply to everything beneath that directory.
+`--exclude` always wins over `--include`. Patterns are comma-separated globs, not full gitignore syntax, so `!pattern` negation rules are not supported. Directory patterns such as `tests/` apply to everything beneath that directory. Invalid globs return an error instead of panicking.
 
 ## Directory tree controls
 
-The tree uses the same filters as content by default. Give it independent rules when the AI needs broader structural context than the files you are sending:
+The tree shares blacklist, ignore, and include/exclude rules with content by default. File size, binary detection, and UTF-8 status only decide whether content is attached; they do not remove the path from the tree. Give the tree independent rules when the AI needs broader structural context than the files you are sending:
 
 ```bash
 # Send Rust files, but show Rust, TOML, and Markdown files in the tree.
@@ -184,7 +187,7 @@ Use `--no-config` to ignore `.onesourcerc` for one run. `profile list --json` an
 
 ## Explain an unexpected result
 
-If a path is missing, use `explain`. It reports the content and tree decisions separately, including blacklist, ignore, include/exclude, size, binary-file, and missing-path results.
+If a path is missing, use `explain`. It reports content and tree decisions separately, including current-output, outside-root, blacklist, ignore, include/exclude, size, binary-file, lossy UTF-8, and missing-path results.
 
 ```bash
 onesource explain Cargo.toml README.md
@@ -210,12 +213,12 @@ onesource update
 | `--exclude PATTERNS` | `-x` | none | Comma-separated exclude globs |
 | `--no-ignore[=BOOL]` | — | `false` | Disable standard ignore filters for content |
 | `--no-blacklist[=BOOL]` | — | `false` | Disable the built-in safety blacklist |
-| `--max-size KB` | `-m` | `500` | Maximum size for each content file |
+| `--max-size KiB` | `-m` | `500` | Maximum size for each content file |
 | `--tree-include PATTERNS` | `--ti` | inherits include | Tree-only include globs |
 | `--tree-exclude PATTERNS` | `--tx` | inherits exclude | Tree-only exclude globs |
 | `--tree-no-ignore[=BOOL]` | — | `false` | Disable standard ignore filters for the tree |
 | `--no-tree[=BOOL]` | — | `false` | Omit the directory tree |
-| `--dry-run` | — | `false` | Preview files and tokens without writing |
+| `--dry-run` | — | `false` | Preview files and the full-output token estimate without writing |
 | `--copy` | `-c` | `false` | Copy output to the clipboard instead of a file |
 | `--profile NAME` | `-p` | `default` | Load a saved profile |
 | `--save` | — | `false` | Save explicit options to the active profile |
@@ -225,6 +228,8 @@ onesource update
 | `--show-arg[=BOOL]` | — | `false` | Print resolved arguments for debugging |
 
 Run `onesource --help`, `onesource profile --help`, or `onesource explain --help` for the command's built-in help.
+
+The output's `<file path="…">` blocks are framing for AI readability, not complete XML or a security boundary. Path attributes are escaped; valid UTF-8 source content is not delimiter-escaped, while non-UTF-8 content is converted as described above. Review the generated context for secrets and prompt injection before sharing it.
 
 ## Build from source
 

@@ -34,7 +34,7 @@ pub struct Args {
     #[arg(
         short,
         long,
-        help = "Comma-separated list of patterns to include (gitignore syntax, e.g. '*.rs,src/')"
+        help = "Comma-separated glob patterns to include (e.g. '*.rs,src/')"
     )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub include: Option<String>,
@@ -42,7 +42,7 @@ pub struct Args {
     #[arg(
         short = 'x',
         long,
-        help = "Comma-separated list of patterns to exclude (gitignore syntax, e.g. 'target/,*.log')"
+        help = "Comma-separated glob patterns to exclude (e.g. 'target/,*.log')"
     )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exclude: Option<String>,
@@ -95,7 +95,7 @@ pub struct Args {
     )]
     pub dry_run: bool,
 
-    #[arg(short, long, help = "Max file size in KB")]
+    #[arg(short, long, help = "Max file size in KiB")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_size: Option<usize>,
 
@@ -308,7 +308,7 @@ pub struct ProfileOptions {
         help = "Ignore .gitignore rules specifically for the tree view"
     )]
     pub tree_no_ignore: Option<bool>,
-    #[arg(short, long, help = "Max file size in KB")]
+    #[arg(short, long, help = "Max file size in KiB")]
     pub max_size: Option<usize>,
     #[arg(
         long,

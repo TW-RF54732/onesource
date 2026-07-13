@@ -88,6 +88,24 @@ jobs:
           ! ./target/debug/onesource profile show renamed
 
           echo ">>> 15. Testing Token Counter & File Filtering"
-          ./target/debug/onesource -i "src/main.rs" --dry-run | grep -q "Total Tokens:"
+          ./target/debug/onesource -i "src/main.rs" --dry-run | grep -q "Estimated Output Tokens:"
+
+          echo ">>> 16. Testing Output Self-Exclusion and Stable Rendering"
+          TMP_ROOT="$(mktemp -d)"
+          PROJECT_DIR="$TMP_ROOT/project"
+          mkdir "$PROJECT_DIR"
+          printf 'hello\n' > "$PROJECT_DIR/a.txt"
+          (cd "$PROJECT_DIR" && "$GITHUB_WORKSPACE/target/debug/onesource" --no-tree)
+          FIRST_HASH="$(sha256sum "$PROJECT_DIR/project.onesource" | cut -d ' ' -f 1)"
+          (cd "$PROJECT_DIR" && "$GITHUB_WORKSPACE/target/debug/onesource" --no-tree)
+          SECOND_HASH="$(sha256sum "$PROJECT_DIR/project.onesource" | cut -d ' ' -f 1)"
+          test "$FIRST_HASH" = "$SECOND_HASH"
+          ! grep -Fq '<file path="project.onesource">' "$PROJECT_DIR/project.onesource"
+
+          echo ">>> 17. Testing Invalid Root and Glob Errors"
+          if ./target/debug/onesource "$PROJECT_DIR/a.txt" --dry-run > "$TMP_ROOT/root-error" 2>&1; then exit 1; fi
+          grep -q "Scan path must be a directory" "$TMP_ROOT/root-error"
+          if ./target/debug/onesource "$PROJECT_DIR" --dry-run -i '[' > "$TMP_ROOT/glob-error" 2>&1; then exit 1; fi
+          grep -q "Invalid glob pattern" "$TMP_ROOT/glob-error"
 
           echo ">>> ALL INTEGRATION TESTS PASSED <<<"
