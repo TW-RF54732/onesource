@@ -7,7 +7,7 @@
 [![Downloads](https://img.shields.io/crates/d/onesource.svg)](https://crates.io/crates/onesource)
 [English](README.md)
 
-把一個專案整理成一份可直接交給 AI 的上下文檔案。`onesource` 會輸出經過篩選的目錄樹，將每個選取的文字檔包在清楚的 `<file path="…">` 區塊中，並顯示預估 token 數。
+一個指令，將你的程式碼專案打包成可重複使用的 AI Context。`onesource` 會輸出經過篩選的目錄樹，將每個選取的文字檔包在清楚的 `<file path="…">` 區塊中，並顯示預估 token 數。
 
 它完全在本機執行。預設會遵守 ignore 規則，並略過常見的敏感檔案、產生檔與依賴目錄。
 
