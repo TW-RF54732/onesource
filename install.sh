@@ -28,7 +28,15 @@ OS="$(uname -s)"
 if [ "$OS" = "Linux" ]; then
     ASSET_NAME="onesource-linux"
 elif [ "$OS" = "Darwin" ]; then
-    ASSET_NAME="onesource-macos"
+    ARCH="$(uname -m)"
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+        ASSET_NAME="onesource-macos-arm64"
+    elif [ "$ARCH" = "x86_64" ]; then
+        ASSET_NAME="onesource-macos"
+    else
+        echo "Unsupported macOS architecture: $ARCH"
+        exit 1
+    fi
 else
     echo "Unsupported OS: $OS"
     exit 1

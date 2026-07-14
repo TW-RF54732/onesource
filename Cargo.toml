@@ -1,9 +1,16 @@
 [package]
 name = "onesource"
-version = "3.5.0"
+version = "3.5.1"
 license = "MIT"
-description = "Placeholder"
+description = "Pack a project into a filtered, AI-ready context file"
 edition = "2021"
+repository = "https://github.com/TW-RF54732/onesource"
+readme = "README.md"
+keywords = ["ai", "llm", "context", "cli", "codebase"]
+categories = ["command-line-utilities", "development-tools"]
+publish = ["crates-io"]
+include = ["src/**", "Cargo.toml", "Cargo.lock", "README.md", "LICENSE"]
+
 [dependencies]
 anyhow = "1.0.102"
 arboard = "3.6.1"

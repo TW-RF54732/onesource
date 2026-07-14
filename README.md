@@ -14,6 +14,12 @@ It runs locally. By default, it respects ignore rules and skips common sensitive
 
 ## Install
 
+### Cargo
+
+```bash
+cargo install onesource
+```
+
 ### macOS / Linux
 
 ```bash

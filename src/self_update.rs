@@ -129,11 +129,16 @@ fn temp_download_path(current_exe: &Path) -> Result<PathBuf> {
 }
 
 fn asset_name() -> Result<&'static str> {
-    match env::consts::OS {
-        "windows" => Ok("onesource.exe"),
-        "linux" => Ok("onesource-linux"),
-        "macos" => Ok("onesource-macos"),
-        other => Err(anyhow!("Unsupported OS for self-update: {}", other)),
+    match (env::consts::OS, env::consts::ARCH) {
+        ("windows", _) => Ok("onesource.exe"),
+        ("linux", _) => Ok("onesource-linux"),
+        ("macos", "x86_64") => Ok("onesource-macos"),
+        ("macos", "aarch64") => Ok("onesource-macos-arm64"),
+        (os, arch) => Err(anyhow!(
+            "Unsupported platform for self-update: {} {}",
+            os,
+            arch
+        )),
     }
 }
 
@@ -253,7 +258,7 @@ mod tests {
     fn asset_name_matches_supported_platforms() {
         assert!(matches!(
             asset_name().unwrap(),
-            "onesource.exe" | "onesource-linux" | "onesource-macos"
+            "onesource.exe" | "onesource-linux" | "onesource-macos" | "onesource-macos-arm64"
         ));
     }
 

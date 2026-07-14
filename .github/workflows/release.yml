@@ -32,6 +32,9 @@ jobs:
       - name: Debug Build
         run: cargo build
 
+      - name: Crates.io Package Check
+        run: cargo publish --dry-run
+
       - name: CLI Smoke Test
         run: |
           ./target/debug/onesource --dry-run
@@ -57,6 +60,10 @@ jobs:
             target: x86_64-apple-darwin
             binary_name: onesource
             release_name: onesource-macos
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary_name: onesource
+            release_name: onesource-macos-arm64
 
     steps:
       - uses: actions/checkout@v4

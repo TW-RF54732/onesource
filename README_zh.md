@@ -14,6 +14,12 @@
 
 ## 安裝
 
+### Cargo
+
+```bash
+cargo install onesource
+```
+
 ### macOS / Linux
 
 ```bash
