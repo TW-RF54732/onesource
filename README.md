@@ -3,6 +3,8 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Built with Rust](https://img.shields.io/badge/built%20with-Rust-orange?logo=rust)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+[![Crates.io](https://img.shields.io/crates/v/onesource.svg)](https://crates.io/crates/onesource)
+[![Downloads](https://img.shields.io/crates/d/onesource.svg)](https://crates.io/crates/onesource)
 
 [繁體中文](README_zh.md)
 

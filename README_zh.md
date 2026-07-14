@@ -3,7 +3,8 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Built with Rust](https://img.shields.io/badge/built%20with-Rust-orange?logo=rust)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
-
+[![Crates.io](https://img.shields.io/crates/v/onesource.svg)](https://crates.io/crates/onesource)
+[![Downloads](https://img.shields.io/crates/d/onesource.svg)](https://crates.io/crates/onesource)
 [English](README.md)
 
 把一個專案整理成一份可直接交給 AI 的上下文檔案。`onesource` 會輸出經過篩選的目錄樹，將每個選取的文字檔包在清楚的 `<file path="…">` 區塊中，並顯示預估 token 數。
