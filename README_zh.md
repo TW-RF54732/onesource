@@ -9,6 +9,8 @@
 
 一個指令，將你的程式碼專案打包成可重複使用的 AI Context。`onesource` 會輸出經過篩選的目錄樹，將每個選取的文字檔包在清楚的 `<file path="…">` 區塊中，並顯示預估 token 數。
 
+> **注意：** token 數量僅供參考，並不完全精確；實際使用量可能會因模型與 tokenizer 而有所不同。
+
 它完全在本機執行。預設會遵守 ignore 規則，並略過常見的敏感檔案、產生檔與依賴目錄。
 
 ![onesource demo](medias/demo.gif)

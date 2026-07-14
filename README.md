@@ -10,6 +10,8 @@
 
 Turn your codebase into a reusable AI context in one command. `onesource` prints a filtered directory tree, wraps each selected text file in a clear `<file path="…">` block, and reports the estimated token count.
 
+> **Note:** The token count is an estimate for reference only and is not completely exact. Actual usage may vary by model and tokenizer.
+
 It runs locally. By default, it respects ignore rules and skips common sensitive, generated, and dependency paths.
 
 ![onesource demo](medias/demo.gif)
