@@ -178,3 +178,14 @@ pre code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-
   .header-links { gap: 12px; margin-right: 12px; font-size: 12px; }
   .docs-page .guide-intro { padding-top: 28px; }
 }
+
+/* Tutorials distinguish commands from output and configuration. */
+.doc-example { background: #171717; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-block: 24px; }
+.doc-example pre { padding: 20px; line-height: 1.8; }
+.doc-output { border-left: 3px solid #718b99; }
+.doc-config { border-left: 3px solid #9b8a67; }
+.docs-page .guide-section h3 { margin-top: 28px; margin-bottom: 12px; font-size: 20px; }
+.docs-page .guide-section p code { overflow-wrap: anywhere; }
+.docs-page .guide-section ul { padding-left: 24px; }
+@media (max-width: 650px) { .doc-example pre { padding: 16px; } }
+.docs-page .guide-command pre { white-space: pre; overflow-wrap: normal; overflow-x: auto; }

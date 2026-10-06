@@ -113,8 +113,13 @@ ${alternates}
         }).join('');
         toc = docs[locale][slug].sections.map(section => `<a href="#${escape(section.id)}">${escape(section.title)}</a>`).join('');
       }
-      // Commands stay readable without JavaScript; buttons enhance copying only.
-      body = body.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (block) => guide ? block : `<div class="guide-command"><div class="code-heading"><span>OneSource</span><button type="button" class="copy-command" hidden>${escape(copy.guideCopy)}</button></div>${block}<p class="copy-status" role="status" aria-live="polite"></p></div>`);
+      // Copy controls belong only to runnable commands, never output or JSON examples.
+      body = body.replace(/<pre(?: data-kind="(command|output|config|reference)")?><code>([\s\S]*?)<\/code><\/pre>/g, (block, kind = 'command') => {
+        if (guide) return block; // Installation command panels already include their controls.
+        const label = kind === 'output' ? copy.expectedOutput : kind === 'config' ? copy.configurationExample : kind === 'reference' ? copy.referenceExample : copy.commandLabel;
+        if (kind !== 'command') return `<div class="doc-example doc-${kind}"><div class="code-heading"><span>${escape(label)}</span></div>${block}</div>`;
+        return `<div class="guide-command"><div class="code-heading"><span>${escape(label)}</span><button type="button" class="copy-command" hidden>${escape(copy.guideCopy)}</button></div>${block.replace('<pre', '<pre tabindex="0"')}<p class="copy-status" role="status" aria-live="polite"></p></div>`;
+      });
     }
     const position = slugs.indexOf(slug);
     const pagination = [position > 0 ? [slugs[position - 1], locale === 'en' ? 'Previous' : '上一頁'] : null, position < slugs.length - 1 ? [slugs[position + 1], locale === 'en' ? 'Next' : '下一頁'] : null].filter(Boolean).map(([page, label]) => `<a href="${pageUrl(locale, page)}">${label}: ${escape(titleFor(page))}</a>`).join('');

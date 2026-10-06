@@ -109,5 +109,14 @@
   "docsLabel": "文件",
   "releaseNotes": "查看釋出版本日誌",
   "guidePathText": "Windows 安裝到 %LOCALAPPDATA%\\Programs\\onesource 並更新使用者 PATH；請重開終端機。Unix 移到 /usr/local/bin，必要時要求 sudo。Cargo 使用 ~/.cargo/bin。手動安裝請將所在資料夾加入 PATH；Unix 可放在 ~/.local/bin，並於 shell 啟動檔加入 export PATH=\"$HOME/.local/bin:$PATH\"。Windows 在環境變數的使用者 Path 加入資料夾後開啟新終端機。以 command -v onesource 或 Get-Command onesource 確認選中的執行檔。",
-  "guidePathTitle": "設定 PATH"
+  "guidePathTitle": "設定 PATH",
+  "expectedOutput": "預期輸出／節錄",
+  "configurationExample": "設定範例（JSON）",
+  "commandLabel": "指令",
+  "guidePrepareTitle": "安裝前先確認",
+  "guidePrepareText": "從下方選一種安裝方式。網路安裝需要能連 GitHub 與其 API；macOS／Linux 另需 Bash、curl，Windows 需 PowerShell。預編譯資產涵蓋 Windows x86_64、Linux x86_64 GNU、macOS Intel／Apple Silicon，其他平台應使用具備 Rust 與原生 linker 的 Cargo 建置。安裝完成後，先確認指令路徑與版本，再打包專案。",
+  "guideCargoCheck": "先執行 cargo --version。顯示 cargo 版本代表工具可用；若找不到指令，依上方連結安裝 Rust 並開新終端機。確認後才執行 cargo install onesource，並等候安裝完成。",
+  "guideVerifyAfter": "預期看到以 onesource 開頭的版本行，以及含 Usage／Options 的 help。macOS／Linux 用 command -v onesource 確認安裝位置；Windows 用 Get-Command onesource。如果選中其他位置，修正 PATH 或直接用完整路徑執行。這些檢查確認 CLI 可用，下方預覽再驗證實際打包。",
+  "guidePortableSteps": "先用表格選 OS 與架構，下載該名稱資產（不是原始碼壓縮檔），放在可寫入資料夾。macOS／Linux 可用 uname -m 區分 x86_64 與 arm64／aarch64，再依下方改名。先用相對路徑驗證下載檔，再決定是否加入 PATH。",
+  "referenceExample": "參考資料"
 }

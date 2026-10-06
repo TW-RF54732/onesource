@@ -109,5 +109,14 @@
   "docsLabel": "Docs",
   "releaseNotes": "View release notes",
   "guidePathText": "Windows installer uses %LOCALAPPDATA%\\Programs\\onesource and updates User PATH; restart your terminal. Unix installer moves to /usr/local/bin, requesting sudo if needed. Cargo uses ~/.cargo/bin. For manual installs, add the containing directory to PATH; Unix users can place the binary in ~/.local/bin and add export PATH=\"$HOME/.local/bin:$PATH\" to the shell startup file. On Windows add the folder in Environment Variables → User Path, then open a new terminal. Run command -v onesource or Get-Command onesource to verify which binary is selected.",
-  "guidePathTitle": "Set up PATH"
+  "guidePathTitle": "Set up PATH",
+  "expectedOutput": "Expected output / excerpt",
+  "configurationExample": "Configuration example (JSON)",
+  "commandLabel": "Command",
+  "guidePrepareTitle": "Before you install",
+  "guidePrepareText": "Choose one installation method below. For the network installers you need access to GitHub and its API; macOS/Linux also need Bash and curl, Windows needs PowerShell. Prebuilt assets cover Windows x86_64, Linux x86_64 GNU, and macOS Intel/Apple Silicon. Other platforms should use Cargo with Rust and a native linker. After installing, verify both the command path and version before bundling a project.",
+  "guideCargoCheck": "First run cargo --version. A cargo version line confirms the tool is available; if the command is missing, install Rust using the link above and open a new terminal. Only then run cargo install onesource and wait for installation to finish.",
+  "guideVerifyAfter": "Expect a version line beginning with onesource and a help screen showing Usage and Options. On macOS/Linux, command -v onesource should point to the install location; on Windows use Get-Command onesource. If a different location is selected, fix PATH or run the intended executable by its full path. These checks identify a working CLI; the following preview checks actual bundling.",
+  "guidePortableSteps": "Choose your OS and architecture in the table, download that named asset (not the source archive), and put it in a folder you can write to. On macOS/Linux, use uname -m to distinguish x86_64 from arm64/aarch64; then rename as described below. Running the relative path verifies the download before you decide whether to add it to PATH.",
+  "referenceExample": "Reference"
 }

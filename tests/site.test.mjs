@@ -291,3 +291,21 @@ test('documented CLI options, profile fields, blacklist and decisions cover impl
     for (const name of ['list','show','create','update','delete','rename','desc','ls','rm']) assert.ok(profiles.includes(`profile ${name}`), name);
   }
 });
+
+test('tutorial commands match across languages and output/configuration never get copy controls', async () => {
+  const en = JSON.parse(await read('site/docs.en.json'));
+  const zh = JSON.parse(await read('site/docs.zh.json'));
+  const commands = page => [...page.sections.map(section => section.html).join('').matchAll(/<pre data-kind="command"><code>([\s\S]*?)<\/code><\/pre>/g)].map(m => m[1]);
+  for (const slug of Object.keys(en).filter(slug => slug !== 'cli' && slug !== '')) {
+    assert.deepEqual(commands(en[slug]), commands(zh[slug]), `${slug} command sequences`);
+    for (const locale of ['en', 'zh']) {
+      const html = await read(`dist/${locale}/docs/${slug}/index.html`);
+      for (const panel of html.matchAll(/<div class="guide-command"><div class="code-heading">[\s\S]*?<\/div>(<pre[^>]*>)/g)) assert.ok(!/data-kind="(?:output|config|reference)"/.test(panel[1]));
+      for (const kind of ['output', 'config', 'reference']) {
+        const examples = [...html.matchAll(new RegExp(`<div class="doc-example doc-${kind}">([\\s\\S]*?)</pre></div>`, 'g'))];
+        for (const example of examples) assert.ok(!example[1].includes('copy-command'));
+        assert.equal((html.match(new RegExp(`<pre data-kind="${kind}">`, 'g')) || []).length, (html.match(new RegExp(`class="doc-example doc-${kind}"`, 'g')) || []).length);
+      }
+    }
+  }
+});
