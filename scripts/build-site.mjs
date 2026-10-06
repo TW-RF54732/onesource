@@ -33,18 +33,21 @@ export async function buildSite() {
   const config = JSON.parse(await read('site/config.json'));
   validateConfig(config);
   const template = await read('index.html');
+  const installTemplate = await read('site/install.html');
   const translations = Object.fromEntries(await Promise.all(Object.keys(locales).map(async key => [key, JSON.parse(await read(`site/${key}.json`))])));
   const keys = Object.keys(translations.en).sort();
   if (JSON.stringify(keys) !== JSON.stringify(Object.keys(translations.zh).sort())) throw new Error('Translation keys must match.');
   for (const [locale, copy] of Object.entries(translations)) {
     for (const key of keys) if (typeof copy[key] !== 'string' || !copy[key].trim()) throw new Error(`Missing translation: ${locale}.${key}`);
   }
-  const alternates = `${Object.entries(locales).map(([key, value]) => `<link rel="alternate" hreflang="${value.lang}" href="${config.origin}/${key}/">`).join('\n')}\n<link rel="alternate" hreflang="x-default" href="${config.origin}/">`;
   const image = `${config.origin}/medias/OneSourceSocialCard.png`;
   const pages = [];
-  for (const [route, locale] of [['', 'en'], ['en', 'en'], ['zh', 'zh']]) {
-    const copy = translations[locale];
-    const canonical = `${config.origin}/${locale}/`;
+  for (const [route, locale, guide = false] of [['', 'en'], ['en', 'en'], ['zh', 'zh'], ['en/install', 'en', true], ['zh/install', 'zh', true]]) {
+    const suffix = guide ? 'install/' : '';
+    const copy = { ...translations[locale] };
+    if (guide) { copy.title = copy.guideTitle; copy.description = copy.guideDescription; copy.socialAlt = copy.guideTitle; }
+    const canonical = `${config.origin}/${locale}/${suffix}`;
+    const alternates = `${Object.entries(locales).map(([key, value]) => `<link rel="alternate" hreflang="${value.lang}" href="${config.origin}/${key}/${suffix}">`).join('\n')}\n<link rel="alternate" hreflang="x-default" href="${config.origin}/${guide ? 'en/install/' : ''}">`;
     const jsonld = {
       '@context': 'https://schema.org',
       '@graph': [
@@ -81,16 +84,21 @@ ${alternates}
 <link rel="stylesheet" href="/styles.css">
 <script type="application/ld+json">${serialize(jsonld)}</script>
 <script src="/language.js"${route ? ' defer' : ''}></script>
-<script src="/script.js" defer></script>`;
-    pages.push([path.join(route, 'index.html'), render(template, {
+<script src="/${guide ? 'install.js' : 'script.js'}" defer></script>`;
+    pages.push([path.join(route, 'index.html'), render(guide ? installTemplate : template, {
       ...copy, head, lang: locales[locale].lang,
+      homeUrl: `/${locale}/`, installUrl: `/${locale}/install/`,
+      enUrl: `/en/${suffix}`, zhUrl: `/zh/${suffix}`,
       enCurrent: locale === 'en' ? 'aria-current="true"' : 'class="language-alternate"',
       zhCurrent: locale === 'zh' ? 'aria-current="true"' : 'class="language-alternate"',
       docsUrl: locale === 'en' ? `${config.repository}#readme` : `${config.repository}/blob/main/README_zh.md`
     }, new Set(['head', 'enCurrent', 'zhCurrent']))]);
   }
-  const xmlAlternates = `${Object.entries(locales).map(([key, value]) => `<xhtml:link rel="alternate" hreflang="${value.lang}" href="${config.origin}/${key}/"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${config.origin}/"/>`;
-  pages.push(['sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${Object.keys(locales).map(key => `<url><loc>${config.origin}/${key}/</loc>${xmlAlternates}</url>`).join('')}</urlset>\n`]);
+  const sitemapEntries = ['', 'install/'].flatMap(suffix => {
+    const alternates = Object.entries(locales).map(([key, value]) => `<xhtml:link rel="alternate" hreflang="${value.lang}" href="${config.origin}/${key}/${suffix}"/>`).join('') + `<xhtml:link rel="alternate" hreflang="x-default" href="${config.origin}/${suffix ? 'en/install/' : ''}"/>`;
+    return Object.keys(locales).map(key => `<url><loc>${config.origin}/${key}/${suffix}</loc>${alternates}</url>`);
+  });
+  pages.push(['sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${sitemapEntries.join('')}</urlset>\n`]);
   pages.push(['robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${config.origin}/sitemap.xml\n`]);
   pages.push(['404.html', `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Page not found — OneSource</title><link rel="stylesheet" href="/styles.css"></head><body><main class="container error-page"><h1>404</h1><h2>Page not found</h2><p>This page may have moved. Choose a language to visit OneSource.</p><nav aria-label="Language selection"><a class="button primary" href="/en/" lang="en">English</a> <a class="button secondary" href="/zh/" lang="zh-Hant">繁體中文</a></nav></main></body></html>\n`]);
   pages.push(['.nojekyll', '']);
@@ -100,8 +108,8 @@ ${alternates}
     await mkdir(path.dirname(path.join(output, name)), { recursive: true });
     await writeFile(path.join(output, name), content);
   }
-  const assets = ['styles.css', 'script.js', 'site/language.js', ...['logo-320.webp', 'logo-640.webp', 'logo-960.webp', 'logo.png', 'favicon.png', 'apple-touch-icon.png', 'OneSourceSocialCard.png'].map(name => `medias/${name}`)];
-  for (const asset of assets) await copyFile(path.join(root, asset), path.join(output, asset === 'site/language.js' ? 'language.js' : asset));
+  const assets = ['styles.css', 'script.js', 'site/language.js', 'site/install.js', ...['logo-320.webp', 'logo-640.webp', 'logo-960.webp', 'logo.png', 'favicon.png', 'apple-touch-icon.png', 'OneSourceSocialCard.png'].map(name => `medias/${name}`)];
+  for (const asset of assets) await copyFile(path.join(root, asset), path.join(output, asset.startsWith('site/') ? path.basename(asset) : asset));
   return output;
 }
 

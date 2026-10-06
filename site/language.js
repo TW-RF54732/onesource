@@ -15,7 +15,8 @@
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-language]').forEach(link => {
       // Keep the native link working even when storage or JavaScript is unavailable.
-      link.href = `/${link.dataset.language}/${location.search}${location.hash}`;
+      const destination = link.getAttribute('href').split(/[?#]/)[0];
+      link.href = `${destination}${location.search}${location.hash}`;
       link.addEventListener('click', () => {
         try { localStorage.setItem('onesource-language', link.dataset.language); } catch { /* Navigation still works. */ }
       });

@@ -14,3 +14,13 @@ Validated on 2026-10-06 against the generated site at http://127.0.0.1:4173 usin
 - Node syntax checks, sitemap XML parsing and Git whitespace checks passed.
 
 The browser and Lighthouse tools were installed in /tmp without adding project dependencies. Only the automated Node checks are part of the Pages CI workflow. Browser screenshots and full Lighthouse reports from this run are also under /tmp/onesource-seo-*; they are temporary and not deployed.
+
+## Installation guides — 2026-10-06
+
+Validated the new `/en/install/` and `/zh/install/` pages locally with Chromium 153. The earlier Lighthouse scores above apply to the homepages only; the guides were not measured with Lighthouse.
+
+- `npm run build:site` passed; `npm run test:site` passed all 10 test groups, including guide metadata, canonical/hreflang, sitemap, static content, local resources, language switching, clipboard success/failure/unavailability, and HTTP 200/301/404 behavior.
+- 13 browser scenarios passed: both guide languages at 360/768/1440 px without horizontal overflow; homepage entry links; keyboard language switching with query and anchor preservation; JavaScript disabled; blocked storage; clipboard success, denied access and unavailable API; reduced motion.
+- Browser screenshots were visually inspected for the Chinese desktop and English mobile layouts. Temporary screenshots are in `/tmp/onesource-install-*.png`; the browser check script is `/tmp/onesource-install-browser.mjs`.
+- JavaScript syntax checks and `git diff --check` passed. Local HTTP and browser checks ran with sandbox escalation to allow loopback listening and Chromium launch.
+- The guide changes have not been deployed. Verify HTTPS, guide URLs and indexing after the existing GitHub Pages workflow publishes them.

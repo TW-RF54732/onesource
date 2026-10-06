@@ -1,6 +1,6 @@
 # OneSource website
 
-The website is built from `index.html`, the English and Traditional Chinese JSON dictionaries, and `site/config.json`. Edit these sources, not generated HTML. Node.js 24 or newer is required; there are no npm dependencies to install.
+The website is built from `index.html`, `site/install.html`, the English and Traditional Chinese JSON dictionaries, and `site/config.json`. Edit these sources, not generated HTML. Node.js 24 or newer is required; there are no npm dependencies to install.
 
 ```sh
 npm run build:site
@@ -12,9 +12,9 @@ Preview at http://127.0.0.1:4173. The preview server mirrors directory redirects
 
 ## URLs and language selection
 
-The published origin is https://onesource.zynimous.dev. `/en/` is English, `/zh/` is Traditional Chinese. Both contain complete static content and work without JavaScript. `/` contains an English fallback and redirects using a saved manual preference, then the first supported browser language, then English. Chinese variants all select Traditional Chinese. Explicit language URLs never redirect based on preferences. Manual switches preserve query parameters and section anchors and save `onesource-language`; existing `zh-Hant` preferences remain supported.
+The published origin is https://onesource.zynimous.dev. `/en/` is English, `/zh/` is Traditional Chinese. Installation guides live at `/en/install/` and `/zh/install/`, with commands and copy labels in the same language dictionaries. Both homepages and guides contain complete static content and work without JavaScript. `/` contains an English fallback and redirects using a saved manual preference, then the first supported browser language, then English. Chinese variants all select Traditional Chinese. Explicit language URLs never redirect based on preferences. Manual switches preserve the current page, query parameters and section anchors and save `onesource-language`; existing `zh-Hant` preferences remain supported.
 
-Each language URL has its own canonical, metadata, and JSON-LD. The root fallback canonical points to `/en/`; `x-default` points to `/`. The sitemap lists only the canonical language pages. GitHub Pages adds trailing slashes when visiting `/en` or `/zh`.
+Each language URL has its own canonical, metadata, and JSON-LD. The root fallback canonical points to `/en/`; `x-default` points to `/`. The sitemap lists the two homepages and two installation guides. Guide language alternates point to the corresponding guide; their `x-default` is `/en/install/`. Clipboard controls are progressively enhanced by `site/install.js`, leaving all commands readable without JavaScript. GitHub Pages adds trailing slashes when visiting `/en` or `/zh`.
 
 ## GitHub Pages setup
 
@@ -29,9 +29,9 @@ The existing Rust test and release workflows are independent. Only website artif
 
 ## Verification after publishing
 
-- Check HTTPS, `/en/`, `/zh/`, `/robots.txt`, `/sitemap.xml`, the share image, and a nonexistent URL (which must return HTTP 404).
+- Check HTTPS, `/en/`, `/zh/`, `/en/install/`, `/zh/install/`, `/robots.txt`, `/sitemap.xml`, the share image, and a nonexistent URL (which must return HTTP 404).
 - Test the root with English, Chinese, unsupported languages, saved preferences, and JavaScript disabled. Check language links and anchors on desktop/mobile, keyboard navigation, and reduced motion.
-- Verify `zynimous.dev` or `onesource.zynimous.dev` as a Search Console domain property using Google's DNS TXT record; submit `https://onesource.zynimous.dev/sitemap.xml` and inspect both canonical URLs.
+- Verify `zynimous.dev` or `onesource.zynimous.dev` as a Search Console domain property using Google's DNS TXT record; submit `https://onesource.zynimous.dev/sitemap.xml` and inspect all four canonical URLs.
 - Run Lighthouse and validate structured data. Software markup describes real project facts; there are no invented ratings/reviews, so eligibility for a software rich result is not assumed.
 
 ## Image maintenance
