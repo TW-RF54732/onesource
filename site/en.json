@@ -52,7 +52,7 @@
   "windowsText": "Run the installer in PowerShell, then restart your terminal to refresh PATH.",
   "quickTitle": "From project to AI context",
   "quickText": "Run these commands from your project directory. Preview the selected files first, then create a .onesource file or copy the context to your clipboard. Review the output before sharing it with AI.",
-  "downloadText": "Download a portable binary",
+  "downloadText": "Download portable binaries from GitHub Releases",
   "quickNote": "Packaging runs locally; it does not upload your code. Token counts are estimates.",
   "guideLink": "Installation guide",
   "guideTitle": "Install OneSource — Installation Guide",
@@ -88,7 +88,7 @@
   "guideVerifyIntro": "In a new terminal, check the installed version and available commands. A version beginning with “onesource” and the help text confirm that the executable is available. The version number depends on the release you installed.",
   "guideFirst": "Create your first context",
   "guideFirstIntro": "Replace my-project with your project folder. Preview the selected files and token estimate, then create the output file.",
-  "guideFirstAfter": "OneSource creates <project-name>.onesource in the scanned project folder, containing a directory tree and selected file contents. To copy context without creating a file, run the following command.",
+  "guideFirstAfter": "OneSource creates <project-name>.onesource in the current working directory, containing a directory tree and selected file contents. To copy context without creating a file, run the following command.",
   "guideLocalNote": "Packaging runs locally and does not upload your code. Review the output before sharing it with AI. Token counts are estimates.",
   "guideUpdate": "Update OneSource",
   "guideUpdateIntro": "For a compatible prebuilt installation, download the latest GitHub release and replace the current executable with the built-in update command. On Windows, replacement finishes after the process exits; verify in a new terminal.",
@@ -105,5 +105,9 @@
   "guideFaqArchText": "Check the platform table and download the matching executable. On macOS/Linux, uname -m shows the machine architecture. For platforms without a matching asset, build with Cargo and also update through Cargo.",
   "guideFaqClipboardTitle": "Clipboard unavailable",
   "guideFaqClipboardText": "Clipboard access may be unavailable in remote terminals or environments without a desktop session. Run onesource without --copy to save a file instead.",
-  "guideMore": "Read the full documentation"
+  "guideMore": "Read the full documentation",
+  "docsLabel": "Docs",
+  "releaseNotes": "View release notes",
+  "guidePathText": "Windows installer uses %LOCALAPPDATA%\\Programs\\onesource and updates User PATH; restart your terminal. Unix installer moves to /usr/local/bin, requesting sudo if needed. Cargo uses ~/.cargo/bin. For manual installs, add the containing directory to PATH; Unix users can place the binary in ~/.local/bin and add export PATH=\"$HOME/.local/bin:$PATH\" to the shell startup file. On Windows add the folder in Environment Variables → User Path, then open a new terminal. Run command -v onesource or Get-Command onesource to verify which binary is selected.",
+  "guidePathTitle": "Set up PATH"
 }

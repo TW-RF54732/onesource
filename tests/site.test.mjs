@@ -12,7 +12,7 @@ const languageScript = await read('site/language.js');
 function languageContext({ pathname = '/', languages = ['en-US'], language = 'en-US', saved = null, brokenStorage = false, query = '', hash = '' } = {}) {
   let destination;
   const stored = [];
-  const links = ['en', 'zh'].map(value => ({ dataset: { language: value }, href: `/${value}/${pathname.includes('/install') ? 'install/' : ''}`, getAttribute() { return this.href; }, addEventListener(name, callback) { this[name] = callback; } }));
+  const links = ['en', 'zh'].map(value => ({ dataset: { language: value }, href: `/${value}/${pathname.replace(/^\/(en|zh)\//, '').replace(/^\/$/, '')}`, getAttribute() { return this.href; }, addEventListener(name, callback) { this[name] = callback; } }));
   const context = {
     location: { pathname, search: query, hash, replace(value) { destination = value; } },
     navigator: { languages, language },
@@ -85,7 +85,7 @@ test('static HTML includes localized SEO, software facts and working local resou
     assert.equal(data['@graph'][2].offers.price, '0');
     assert.equal(data['@graph'][2].aggregateRating, undefined);
     assert.equal(data['@graph'][2].review, undefined);
-    assert.ok(html.includes(locale === 'en' ? 'https://github.com/TW-RF54732/onesource#readme' : 'https://github.com/TW-RF54732/onesource/blob/main/README_zh.md'));
+    assert.ok(html.includes(`/${locale}/docs/`));
     const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
     for (const match of html.matchAll(/(?:src|href)="([^"#]+)(?:#[^"]*)?"/g)) {
       if (match[1].startsWith('/')) {
@@ -101,13 +101,13 @@ test('static HTML includes localized SEO, software facts and working local resou
 
 test('sitemap contains only canonical pages and matching language alternates', async () => {
   const sitemap = await read('dist/sitemap.xml');
-  assert.deepEqual([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), [`${origin}/en/`, `${origin}/zh/`, `${origin}/en/install/`, `${origin}/zh/install/`]);
-  assert.equal((sitemap.match(/hreflang="x-default"/g) || []).length, 4);
+  assert.deepEqual([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), ['', 'docs/', ...['install', 'getting-started', 'cli', 'filtering', 'tree', 'profiles', 'explain', 'output', 'update', 'troubleshooting'].map(slug => `docs/${slug}/`)].flatMap(suffix => ['en', 'zh'].map(locale => `${origin}/${locale}/${suffix}`)));
+  assert.equal((sitemap.match(/hreflang="x-default"/g) || []).length, 24);
   assert.ok(!sitemap.includes('lastmod'));
   assert.ok((await read('dist/robots.txt')).includes(`Sitemap: ${origin}/sitemap.xml`));
   assert.ok((await read('dist/404.html')).includes('content="noindex"'));
   assert.ok(!(await read('dist/404.html')).includes('language.js'));
-  assert.deepEqual((await readdir(path.join(root, 'dist'))).sort(), ['.nojekyll', '404.html', 'en', 'index.html', 'install.js', 'language.js', 'medias', 'robots.txt', 'script.js', 'sitemap.xml', 'styles.css', 'zh']);
+  assert.deepEqual((await readdir(path.join(root, 'dist'))).sort(), ['.nojekyll', '404.html', 'en', 'index.html', 'install-redirect.js', 'install.js', 'language.js', 'medias', 'robots.txt', 'script.js', 'sitemap.xml', 'styles.css', 'zh']);
 });
 
 test('preview serves real 404 and directory redirects', async () => {
@@ -115,7 +115,7 @@ test('preview serves real 404 and directory redirects', async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   try {
     const base = `http://127.0.0.1:${server.address().port}`;
-    for (const route of ['/en/', '/zh/', '/en/install/', '/zh/install/', '/robots.txt', '/sitemap.xml', '/medias/logo-320.webp']) assert.equal((await fetch(base + route)).status, 200);
+    for (const route of ['/en/', '/zh/', '/en/install/', '/zh/install/', '/robots.txt', '/sitemap.xml', '/medias/logo-320.webp', ...['en', 'zh'].flatMap(locale => docSlugs.map(slug => `/${locale}/docs/${slug ? slug + '/' : ''}`))]) assert.equal((await fetch(base + route)).status, 200);
     const redirect = await fetch(base + '/en?ref=test', { redirect: 'manual' });
     assert.equal(redirect.status, 301);
     assert.equal(redirect.headers.get('location'), '/en/?ref=test');
@@ -146,19 +146,19 @@ test('guide language links preserve page, query and anchor in both directions', 
 
 test('installation pages are complete static guides with their own SEO and valid navigation', async () => {
   for (const locale of ['en', 'zh']) {
-    const html = await read(`dist/${locale}/install/index.html`);
+    const html = await read(`dist/${locale}/docs/install/index.html`);
     const copy = JSON.parse(await read(`site/${locale}.json`));
     assert.equal((html.match(/<h1\b/g) || []).length, 1);
     assert.ok(html.includes(`<title>${copy.guideTitle}</title>`));
     assert.ok(html.includes(copy.guideDescription));
-    assert.ok(html.includes(`rel="canonical" href="${origin}/${locale}/install/"`));
+    assert.ok(html.includes(`rel="canonical" href="${origin}/${locale}/docs/install/"`));
     for (const [lang, target] of [['en', 'en'], ['zh-Hant', 'zh'], ['x-default', 'en']]) {
-      assert.ok(html.includes(`hreflang="${lang}" href="${origin}/${target}/install/"`));
+      assert.ok(html.includes(`hreflang="${lang}" href="${origin}/${target}/docs/install/"`));
     }
     assert.ok(html.includes(`href="/${locale}/"`));
-    for (const target of ['en', 'zh']) assert.ok(html.includes(`href="/${target}/install/" data-language="${target}"`));
+    for (const target of ['en', 'zh']) assert.ok(html.includes(`href="/${target}/docs/install/" data-language="${target}"`));
     const jsonld = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
-    assert.equal(jsonld['@graph'][1].url, `${origin}/${locale}/install/`);
+    assert.equal(jsonld['@graph'][1].url, `${origin}/${locale}/docs/install/`);
     assert.equal(jsonld['@graph'][1].name, copy.guideTitle);
     assert.ok(!html.includes('/script.js'));
     assert.ok(!/{{|data-i18n/.test(html));
@@ -171,7 +171,7 @@ test('installation pages are complete static guides with their own SEO and valid
       await access(path.join(root, 'dist', match[1].endsWith('/') ? match[1] + 'index.html' : match[1]));
     }
     const home = await read(`dist/${locale}/index.html`);
-    assert.ok(home.includes(`href="/${locale}/install/"`));
+    assert.ok(home.includes(`href="/${locale}/docs/install/"`));
     assert.ok(html.includes('class="copy-command" hidden'));
     assert.equal((html.match(/<details>/g) || []).length, 5);
   }
@@ -200,5 +200,94 @@ test('copy controls copy the displayed command and recover from denied clipboard
       assert.equal(status.textContent, outcome === 'success' ? 'Copied' : 'Copy manually');
       assert.equal(copied, outcome === 'success' ? code.textContent : undefined);
     }
+  }
+});
+
+const docSlugs = ['', 'install', 'getting-started', 'cli', 'filtering', 'tree', 'profiles', 'explain', 'output', 'update', 'troubleshooting'];
+test('all docs have matching sections, complete static navigation and valid local links/anchors', async () => {
+  for (const slug of docSlugs) {
+    const idsByLanguage = [];
+    for (const locale of ['en', 'zh']) {
+      const suffix = `docs/${slug ? slug + '/' : ''}`;
+      const html = await read(`dist/${locale}/${suffix}index.html`);
+      const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
+      idsByLanguage.push(ids);
+      assert.equal(ids.length, new Set(ids).size);
+      assert.equal((html.match(/<h1\b/g) || []).length, 1);
+      assert.ok(html.includes(`rel="canonical" href="${origin}/${locale}/${suffix}"`));
+      assert.ok(html.includes(`hreflang="x-default" href="${origin}/en/${suffix}"`));
+      assert.ok(html.includes('<details class="mobile-index">'));
+      assert.ok(html.includes('aria-current="page"'));
+      assert.ok(html.includes('id="content"'));
+      for (const language of ['en', 'zh']) assert.ok(html.includes(`href="/${language}/${suffix}" data-language="${language}"`));
+      for (const m of html.matchAll(/(?:href|src)="(\/[^"?#]*)(?:\?[^"#]*)?(?:#([^"]*))?"/g)) {
+        const target = m[1].endsWith('/') ? m[1] + 'index.html' : m[1];
+        await access(path.join(root, 'dist', target));
+        if (m[2]) assert.ok((await read(`dist${target}`)).includes(`id="${m[2]}"`));
+      }
+      for (const m of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(m[1]), `${locale}/${slug}#${m[1]}`);
+      assert.ok(!/{{|data-i18n/.test(html));
+    }
+    assert.deepEqual(idsByLanguage[0], idsByLanguage[1], slug);
+  }
+});
+
+test('old installation URLs redirect with query/hash and provide a no-JavaScript link', async () => {
+  const script = await read('site/install-redirect.js');
+  for (const locale of ['en', 'zh']) {
+    const html = await read(`dist/${locale}/install/index.html`);
+    assert.ok(html.includes(`id="install-destination" href="/${locale}/docs/install/"`));
+    assert.ok(html.includes('content="noindex"'));
+    assert.ok(!html.includes('id="windows"'));
+    let destination;
+    vm.runInNewContext(script, {
+      document: { getElementById() { return { getAttribute() { return `/${locale}/docs/install/`; } }; } },
+      location: { search: '?ref=old', hash: '#verify', replace(value) { destination = value; } }
+    });
+    assert.equal(destination, `/${locale}/docs/install/?ref=old#verify`);
+  }
+  assert.ok(!(await read('dist/sitemap.xml')).includes('<loc>' + origin + '/en/install/'));
+});
+
+test('docs language switches preserve each route, query and common anchor', () => {
+  for (const slug of docSlugs) for (const source of ['en', 'zh']) {
+    const target = source === 'en' ? 'zh' : 'en';
+    const suffix = `docs/${slug ? slug + '/' : ''}`;
+    const result = languageContext({ pathname: `/${source}/${suffix}`, query: '?ref=docs', hash: '#examples' });
+    assert.equal(result.links.find(link => link.dataset.language === target).href, `/${target}/${suffix}?ref=docs#examples`);
+  }
+});
+
+test('homepage hero, navigation, download and release-note links', async () => {
+  for (const locale of ['en', 'zh']) {
+    const html = await read(`dist/${locale}/index.html`);
+    assert.match(html, new RegExp(`class="button secondary" href="/${locale}/docs/install/"`));
+    const header = html.match(/<header[\s\S]*?<\/header>/)[0];
+    assert.ok(header.includes(`href="/${locale}/docs/"`));
+    assert.ok(header.includes('href="https://github.com/TW-RF54732/onesource"'));
+    assert.ok(html.includes(locale === 'en' ? 'Download portable binaries from GitHub Releases' : '從 GitHub Releases 下載免安裝執行檔'));
+    assert.ok(html.includes(locale === 'en' ? 'View release notes' : '查看釋出版本日誌'));
+  }
+});
+
+test('documented CLI options, profile fields, blacklist and decisions cover implementation', async () => {
+  const config = await read('src/configs.rs');
+  const filter = await read('src/filter_utils.rs');
+  const explain = await read('src/explain.rs');
+  for (const locale of ['en', 'zh']) {
+    const cli = await read(`dist/${locale}/docs/cli/index.html`);
+    const profiles = await read(`dist/${locale}/docs/profiles/index.html`);
+    const filtering = await read(`dist/${locale}/docs/filtering/index.html`);
+    const diagnostics = await read(`dist/${locale}/docs/explain/index.html`);
+    const args = config.split('pub struct Args {')[1].split('#[derive(Subcommand')[0];
+    for (const m of args.matchAll(/pub (\w+):/g)) {
+      if (m[1] !== 'command' && m[1] !== 'desc') assert.ok(cli.includes(`<code>${m[1]}</code>`), m[1]);
+    }
+    const fields = config.split('pub struct ProfileConfig {')[1].split('impl ProfileConfig')[0];
+    for (const m of fields.matchAll(/pub (\w+):/g)) assert.ok(profiles.includes(`&quot;${m[1]}&quot;`) || profiles.includes(`"${m[1]}"`), m[1]);
+    for (const m of filter.split('pub struct FileFilter')[0].matchAll(/"([^"]+)"/g)) assert.ok(filtering.includes(m[1]), m[1]);
+    const decisions = explain.split('fn decision_text')[1].split('#[cfg(test)]')[0];
+    for (const m of decisions.matchAll(/"([^"]+)"/g)) assert.ok(diagnostics.includes(m[1]), m[1]);
+    for (const name of ['list','show','create','update','delete','rename','desc','ls','rm']) assert.ok(profiles.includes(`profile ${name}`), name);
   }
 });

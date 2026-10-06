@@ -151,3 +151,30 @@ pre code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-
   .guide-command pre { padding: 16px; }
   .guide-command .code-heading { padding-inline: 16px; }
 }
+
+/* Shared documentation layout; all navigation works without JavaScript. */
+.header-links { display: flex; gap: 24px; margin-left: auto; margin-right: 24px; font-size: 14px; }
+.breadcrumbs { padding-top: 24px; color: var(--muted); font-size: 14px; }
+.docs-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); padding-bottom: 80px; }
+.docs-sidebar { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; }
+.docs-sidebar a { display: block; padding: 10px 16px; min-height: 44px; border-left: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+.docs-sidebar a[aria-current="page"] { border-left: 2px solid var(--text); color: var(--text); background: var(--surface); }
+.mobile-index { display: none; }
+.page-toc { padding-bottom: 28px; }
+.page-toc a { display: inline-block; padding: 10px 0; margin-right: 24px; color: var(--muted); min-height: 44px; }
+.docs-pagination { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px; border-top: 1px solid var(--line); padding-top: 24px; }
+.docs-page .guide-section p { margin-block: 16px; }
+.docs-page .guide-table td { vertical-align: top; min-width: 150px; }
+.docs-page .guide-table td:last-child { min-width: 260px; }
+.docs-page li { margin-block: 10px; }
+@media (max-width: 900px) {
+  .docs-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .docs-sidebar { position: static; max-height: none; }
+  .desktop-index { display: none; }
+  .mobile-index { display: block; border-block: 1px solid var(--line); padding: 16px 0; }
+  .mobile-index summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+}
+@media (max-width: 650px) {
+  .header-links { gap: 12px; margin-right: 12px; font-size: 12px; }
+  .docs-page .guide-intro { padding-top: 28px; }
+}

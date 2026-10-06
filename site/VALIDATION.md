@@ -24,3 +24,13 @@ Validated the new `/en/install/` and `/zh/install/` pages locally with Chromium 
 - Browser screenshots were visually inspected for the Chinese desktop and English mobile layouts. Temporary screenshots are in `/tmp/onesource-install-*.png`; the browser check script is `/tmp/onesource-install-browser.mjs`.
 - JavaScript syntax checks and `git diff --check` passed. Local HTTP and browser checks ran with sandbox escalation to allow loopback listening and Chromium launch.
 - The guide changes have not been deployed. Verify HTTPS, guide URLs and indexing after the existing GitHub Pages workflow publishes them.
+
+## Complete bilingual documentation — 2026-10-06
+
+- Added 22 static docs pages at `/en/docs/` and `/zh/docs/`, with matched section IDs and 24 canonical sitemap entries including homepages. Old installation URLs are excluded from the sitemap and provide query/hash-preserving JavaScript redirects plus native fallback links.
+- `npm run build:site` and all 15 `npm run test:site` groups passed. Checks cover all docs routes/resources/anchors, localized SEO/JSON-LD, navigation, homepage entry/download/release links, redirects, language switching, clipboard enhancement and source-based CLI/profile/blacklist/diagnostic coverage.
+- `npm run test:docs` passed against the locally built CLI using an automatically cleaned temporary project. It exercises file output, exact 1024/1025-byte boundaries, NUL detection, lossy UTF-8, ignore/blacklist diagnostics, independent tree selection, empty filters, explicit false, dry-run/copy/save, explain's ignored action flags, profile merge/replacement, legacy aliases, invalid globs and directory symlinks.
+- `cargo test --offline`: all 29 Rust tests passed. Rust implementation was not changed. All options from 11 built-in help screens were checked against both languages.
+- 75 Chromium scenarios passed: every docs page in both languages at 360/768/1440 px without document-level horizontal overflow, readable static content with JavaScript disabled, expandable mobile index, native legacy fallback links, query/hash-preserving automatic redirects, keyboard language switching and homepage Hero installation navigation. Desktop and mobile screenshots were visually inspected. Temporary browser script/screenshots: `/tmp/onesource-docs-browser.mjs` and `/tmp/onesource-docs-*.png`.
+- Syntax and Git whitespace checks passed. Local HTTP/browser checks required sandbox escalation for loopback listening and Chromium launch. No new Lighthouse scores are claimed for these docs pages.
+- Changes have not been deployed; publishing continues through the existing GitHub Pages workflow.

@@ -1,0 +1,222 @@
+{
+  "": {
+    "title": "Documentation",
+    "description": "Complete OneSource guide: install, bundle, filter, configure and diagnose projects.",
+    "sections": [
+      {
+        "id": "overview",
+        "title": "What OneSource does",
+        "html": "<p>OneSource bundles a local project into a directory tree and text file blocks for review or AI context. It supports glob filters, ignore rules, reusable profiles, clipboard output, dry-run previews and per-path diagnostics. Normal bundling stays local; installation and self-update contact GitHub.</p>"
+      },
+      {
+        "id": "reading-order",
+        "title": "Suggested reading order",
+        "html": "<p>Start with Installation and Getting started. Read CLI reference, Filtering and Directory tree to control selection. Profiles explains reusable settings; Explain diagnoses missing files. Output, Updating and Troubleshooting cover delivery and maintenance.</p>"
+      },
+      {
+        "id": "index",
+        "title": "All documentation",
+        "html": "{{index}}"
+      }
+    ]
+  },
+  "getting-started": {
+    "title": "Getting started",
+    "description": "Preview and create your first OneSource bundle, then reuse it with a profile.",
+    "sections": [
+      {
+        "id": "first-run",
+        "title": "Preview before bundling",
+        "html": "<p>Open a terminal in your project. These commands bypass saved settings so the example uses built-in defaults. Preview reads file contents and estimates tokens, but does not create the bundle.</p><pre><code>cd my-project\nonesource --no-config --dry-run\nonesource --no-config</code></pre>"
+      },
+      {
+        "id": "read-output",
+        "title": "Read the result",
+        "html": "<p>Expect a tree, + file messages and a summary. The default output is my-project.onesource in the working directory. Open it as text: the tree comes first, followed by &lt;file path=\"…\"&gt; blocks. [EXPECT] marks readable preview files; [SKIP] reports oversized, binary or unreadable candidates.</p>"
+      },
+      {
+        "id": "example",
+        "title": "A complete workflow",
+        "html": "<pre><code>onesource --no-config -i \"src/**,Cargo.toml\" -x \"src/legacy/\" --dry-run\nonesource --no-config -i \"src/**,Cargo.toml\" -x \"src/legacy/\" -o review.onesource\nonesource profile create review -i \"src/**,Cargo.toml\" -x \"src/legacy/\"\nonesource -p review --dry-run\nonesource -p review --copy</code></pre><p>The first command previews selected source and Cargo.toml; the second writes review.onesource. Create stores settings only. The last command copies the generated text without creating an output file; it requires a working desktop clipboard.</p>"
+      }
+    ]
+  },
+  "cli": {
+    "title": "CLI reference",
+    "description": "Every OneSource argument, option, alias and command.",
+    "sections": [
+      {
+        "id": "syntax",
+        "title": "Syntax and boolean values",
+        "html": "<pre><code>onesource [PATH] [OPTIONS]\nonesource [PATH] profile &lt;COMMAND&gt;\nonesource [PATH] explain &lt;PATHS&gt;... [OPTIONS]\nonesource update\nonesource help profile update</code></pre><p>Persistable boolean options and --show-arg accept a bare flag (true) or =true/=false; use --no-tree=false, not --no-tree false. Action flags such as --copy, --save and --dry-run do not accept =false. Top-level options are not global: put root and top-level options before the subcommand. Explain and profile create/update have their own options after the subcommand.</p>"
+      },
+      {
+        "id": "options",
+        "title": "All arguments and options",
+        "html": "<div class=\"guide-table\"><table><thead><tr><th>Syntax</th><th>Field, type, default</th><th>Commands and profile storage</th><th>Behavior and example</th></tr></thead><tbody><tr><th scope=\"row\"><code>[PATH]</code></th><td><code>path</code><br>directory; .</td><td>Top level<br>Profile: no</td><td>Scan root; must exist and be a directory. Put before subcommands. Config is read only from PATH/.onesourcerc; no ancestor search.<p><code>onesource ./my-project --dry-run</code></p><p>Preview the given root.</p></td></tr><tr><th scope=\"row\"><code>-o, --output-path PATH</code></th><td><code>output_path</code><br>path; &lt;root-name&gt;.onesource</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Relative to the working directory, even with another scan root. Current output is always excluded. Parent must already exist for file output.<p><code>onesource -o review.txt</code></p><p>Write review.txt in the working directory.</p></td></tr><tr><th scope=\"row\"><code>-i, --include GLOBS</code></th><td><code>include</code><br>string; unset (all)</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Comma-separated patterns. Empty string clears the filter; blacklist and ignore still apply. Tree inherits unless overridden.<p><code>onesource -i &quot;*.rs&quot; --dry-run</code></p><p>Preview eligible Rust files.</p></td></tr><tr><th scope=\"row\"><code>-x, --exclude GLOBS</code></th><td><code>exclude</code><br>string; unset</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Exclude wins over include. Empty string clears this filter. Tree inherits unless overridden.<p><code>onesource -x &quot;*.log&quot; --dry-run</code></p><p>Remove log paths from content and inherited tree.</p></td></tr><tr><th scope=\"row\"><code>--tree-include, --ti GLOBS</code></th><td><code>tree_include</code><br>string; inherit include</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Overrides only the tree include; use =\"\" to show all otherwise eligible tree paths.<p><code>onesource -i &quot;*.rs&quot; --ti &quot;*.toml&quot; --dry-run</code></p><p>Tree shows TOML; content selects Rust.</p></td></tr><tr><th scope=\"row\"><code>--tree-exclude, --tx GLOBS</code></th><td><code>tree_exclude</code><br>string; inherit exclude</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Overrides only the tree exclude; empty string removes inherited exclusions.<p><code>onesource -x &quot;*.log&quot; --tx &quot;&quot; --dry-run</code></p><p>Tree no longer inherits log exclusion.</p></td></tr><tr><th scope=\"row\"><code>--no-ignore[=BOOL]</code></th><td><code>no_ignore</code><br>boolean; false</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Disables standard ignore filters for content. Tree inherits unless tree-no-ignore is set. Does not disable blacklist.<p><code>onesource --no-ignore --dry-run</code></p><p>Ignore rules bypassed, blacklist retained.</p></td></tr><tr><th scope=\"row\"><code>--tree-no-ignore[=BOOL]</code></th><td><code>tree_no_ignore</code><br>boolean; inherit no_ignore</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Independent ignore override for tree. Explicit false keeps tree ignore rules even with --no-ignore.<p><code>onesource --no-ignore --tree-no-ignore=false --dry-run</code></p><p>Tree still honors ignore.</p></td></tr><tr><th scope=\"row\"><code>--no-tree[=BOOL]</code></th><td><code>no_tree</code><br>boolean; false</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Omits the tree only; file content is unaffected.<p><code>onesource --no-tree --dry-run</code></p><p>No tree, file preview remains.</p></td></tr><tr><th scope=\"row\"><code>--no-blacklist[=BOOL]</code></th><td><code>no_blacklist</code><br>boolean; false</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Disables built-in blacklist for both content and tree. Current output still excluded; ignore and glob filters remain.<p><code>onesource explain .env --no-blacklist</code></p><p>No built-in blacklist block for .env.</p></td></tr><tr><th scope=\"row\"><code>-m, --max-size KIB</code></th><td><code>max_size</code><br>nonnegative usize; 500 KiB</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Content only. Rejects bytes > KIB × 1024; equality is allowed. Zero admits only empty files. Tree unaffected.<p><code>onesource -m 1 --dry-run</code></p><p>At most 1024 bytes per content file.</p></td></tr><tr><th scope=\"row\"><code>--desc TEXT</code></th><td><code>description</code><br>string; unset</td><td>Normal + explain + profile create/update<br>Profile: yes</td><td>Stored with --save or profile create/update. Does not change selection. Empty string is allowed. Explain accepts but ignores it.<p><code>onesource --desc &quot;Review&quot; --save --dry-run</code></p><p>Store description in default.</p></td></tr><tr><th scope=\"row\"><code>-p, --profile NAME</code></th><td><code>profile</code><br>string; default</td><td>Normal + explain<br>Profile: no</td><td>Loads exactly one profile, without merging default into named profiles. Missing explicit profile is an error unless --no-config.<p><code>onesource -p review --dry-run</code></p><p>Preview with an existing review profile.</p></td></tr><tr><th scope=\"row\"><code>--no-config</code></th><td><code>no_config</code><br>flag; false</td><td>Normal + explain<br>Profile: no</td><td>Skips loading config; --save still reads and writes the config document.<p><code>onesource --no-config --dry-run</code></p><p>Use built-in values and explicit CLI options.</p></td></tr><tr><th scope=\"row\"><code>--dry-run</code></th><td><code>dry_run</code><br>flag; false</td><td>Normal + explain<br>Profile: no</td><td>Reads files and estimates output without writing bundle or clipboard. --save still persists config before scan.<p><code>onesource --dry-run</code></p><p>Print expectations and estimates; no bundle.</p></td></tr><tr><th scope=\"row\"><code>-c, --copy</code></th><td><code>copy</code><br>flag; false</td><td>Normal + explain<br>Profile: no</td><td>Copies entire bundle instead of writing file. --dry-run suppresses copy. Clipboard failures stop execution.<p><code>onesource --copy</code></p><p>Copy bundle; no output file.</p></td></tr><tr><th scope=\"row\"><code>--save</code></th><td><code>save</code><br>flag; false</td><td>Normal + explain<br>Profile: no</td><td>Upserts explicit persistable options into active profile before scan; a later scan failure does not undo save.<p><code>onesource -i &quot;*.rs&quot; --save --dry-run</code></p><p>Merge explicit include into default.</p></td></tr><tr><th scope=\"row\"><code>--replace</code></th><td><code>replace</code><br>flag; false</td><td>Normal + explain<br>Profile: no</td><td>Requires --save in normal runs; discards unspecified saved fields. profile update also supports --replace.<p><code>onesource --save --replace -i &quot;*.rs&quot; --dry-run</code></p><p>Stored default contains only explicit include.</p></td></tr><tr><th scope=\"row\"><code>--show-arg[=BOOL]</code></th><td><code>show_arg</code><br>boolean; false</td><td>Normal + explain<br>Profile: no</td><td>Prints resolved AppConfig after normal execution and statistics. Explain accepts but does not print it.<p><code>onesource --show-arg --dry-run</code></p><p>Print resolved arguments after statistics.</p></td></tr><tr><th scope=\"row\"><code>-h, --help</code></th><td><code>help</code><br>flag; no execution</td><td>All commands<br>Profile: no</td><td>Shows help for the current command. help subcommand is also available. Not a setting.<p><code>onesource explain --help</code></p><p>Show diagnostic command help.</p></td></tr><tr><th scope=\"row\"><code>-V, --version</code></th><td><code>version</code><br>flag; no execution</td><td>Top level<br>Profile: no</td><td>Shows executable version at top level; not a setting.<p><code>onesource --version</code></p><p>Print installed version and exit.</p></td></tr></tbody></table></div>"
+      },
+      {
+        "id": "examples",
+        "title": "Overrides and help",
+        "html": "<pre><code>onesource --no-config --no-tree=false -m 1 --dry-run\nonesource --include=\"\" --tree-exclude=\"\" --dry-run\nonesource explain src/main.rs --no-ignore=false\nonesource profile --help\nonesource profile update --help\nonesource explain --help\nonesource --version</code></pre><p>The first preview allows content up to 1024 bytes and keeps the tree. Empty filters override saved strings. For each option, the behavior column describes its interactions; use the corresponding detailed page for output examples.</p>"
+      }
+    ]
+  },
+  "filtering": {
+    "title": "Filtering files",
+    "description": "Glob matching, ignore rules and the complete built-in blacklist.",
+    "sections": [
+      {
+        "id": "glob",
+        "title": "Glob syntax",
+        "html": "<p>Quote patterns to prevent shell expansion. Patterns are comma-separated, trimmed and backslashes are normalized to /. Empty entries are ignored; an empty list disables that filter. Globset supports *, ?, **, character classes and braces (avoid commas inside braces because the CLI splits commas first). Matching is case-sensitive. * may match across separators with the current default Glob settings. A trailing src/ becomes src/**. A simple name with no slash, star or dot, such as vendor, matches that name and descendants at any depth; names containing dots do not get this expansion. Invalid globs return an error.</p><pre><code>onesource -i \"*.rs,*.toml\" -x \"vendor,src/legacy/\" --dry-run\nonesource --include=\"\" --exclude=\"\" --dry-run</code></pre>"
+      },
+      {
+        "id": "priority",
+        "title": "Selection order and ignore rules",
+        "html": "<p>Current output is excluded independently. Standard walker filters honor .ignore, .gitignore, Git exclude/global and parent ignore rules, even outside a Git repository; hidden files are not automatically excluded. Blacklist wins over user globs; exclude wins over include. An include cannot restore an ignored or blacklisted path. Explain reports blacklist before ignore, then exclude, then include; content then checks file type, size, NUL bytes and readability. --no-ignore disables standard ignore filters; --no-blacklist is separate.</p>"
+      },
+      {
+        "id": "blacklist",
+        "title": "Complete built-in blacklist",
+        "html": "<p>Component names match case-insensitively anywhere in the path. Patterns match case-insensitively against the normalized path or filename. Disabling this list can include secrets and previous bundles; review the preview before sharing.</p><pre><code>.git, .gitignore, .env, .onesourcerc, .svn, .hg, node_modules,\n__pycache__, venv, .venv, .pytest_cache, .tox, target, .idea, .vscode,\n.DS_Store, .npmrc, .pypirc, .netrc, id_rsa, id_dsa, id_ecdsa, id_ed25519\n\n.env.*, credentials.json, service-account*.json, *.pem, *.key,\n*.p12, *.pfx, *.onesource, .onesource-tmp-*, .onesource-backup-*</code></pre>"
+      }
+    ]
+  },
+  "tree": {
+    "title": "Directory tree",
+    "description": "Control structure independently from attached file contents.",
+    "sections": [
+      {
+        "id": "inheritance",
+        "title": "Inheritance and overrides",
+        "html": "<p>Tree include/exclude fall back individually to content include/exclude. An explicit empty string is an override that disables that tree filter. tree_no_ignore falls back to resolved no_ignore; explicit false overrides inherited true. no_blacklist affects both; no_tree disables tree generation entirely.</p>"
+      },
+      {
+        "id": "structure",
+        "title": "Structure is not attached content",
+        "html": "<p>The tree is sorted by name and inserts ancestors of matching paths. It does not inspect size, NUL bytes or content readability: a binary or oversized file may appear in the tree without a file block. Symlink directories are not recursively followed. A symlink outside root may appear in the tree but its content is skipped. Content candidates are sorted by relative path.</p>"
+      },
+      {
+        "id": "examples",
+        "title": "Independent tree examples",
+        "html": "<pre><code>onesource -i \"*.rs\" --ti \"\" --tx \"target/\" --dry-run\nonesource --no-ignore --tree-no-ignore=false --dry-run\nonesource --no-tree --dry-run</code></pre><p>First: attach Rust content while showing all tree paths except target and other blocked paths. Second: content bypasses ignore while tree keeps ignore rules. Third: preview contents without tree.</p>"
+      }
+    ]
+  },
+  "profiles": {
+    "title": "Configuration and profiles",
+    "description": "All configuration fields, precedence and profile management commands.",
+    "sections": [
+      {
+        "id": "schema",
+        "title": "Configuration schema and precedence",
+        "html": "<p>JSON lives at scan-root/.onesourcerc. Explicit CLI values win over the selected profile, then built-in defaults apply. The default profile is optional; named profiles do not inherit it. Unknown fields are ignored by serde. Omitted or null fields use defaults/inheritance; empty strings and false are explicit values. Field types, defaults and effects are listed in CLI reference. Only the fields below are persisted; path, profile choice, copy, dry_run, save, replace, no_config and show_arg are not persisted.</p><pre><code>{\n  \"profiles\": {\n    \"default\": {\n      \"description\": \"Source review\",\n      \"output_path\": \"review.onesource\",\n      \"include\": \"src/**\",\n      \"exclude\": \"src/legacy/\",\n      \"tree_include\": \"\",\n      \"tree_exclude\": \"target/\",\n      \"max_size\": 500,\n      \"no_ignore\": false,\n      \"tree_no_ignore\": false,\n      \"no_tree\": false,\n      \"no_blacklist\": false\n    }\n  }\n}</code></pre>"
+      },
+      {
+        "id": "commands",
+        "title": "All profile commands",
+        "html": "<pre><code>onesource profile list\nonesource profile ls --json\nonesource profile show review --json\nonesource profile create review -i \"src/**\" --desc \"Review\"\nonesource profile update review -m 100\nonesource profile update review --replace -i \"*.rs\"\nonesource profile rename review backend\nonesource profile delete backend\nonesource profile rm default\nonesource profile desc \"Legacy description\" -p review</code></pre><p>list sorts names; --json emits an array of {name, profile}. show displays unset fields or emits the stored JSON object. create errors if the name exists. update requires an existing profile; merging preserves unspecified fields, --replace discards them (including description). rename requires an existing source and unused destination. delete requires an existing profile; deleting default restores built-in behavior for unnamed runs. ls and rm are hidden aliases. desc is a hidden legacy command requiring -p/--profile, equivalent to updating description. Names must be nonempty ASCII letters/digits, dots, underscores or hyphens. Management commands use the scan root and read config even with top-level --no-config; they do not bundle files.</p><p>Command syntax: profile list [--json], profile show NAME [--json], profile create NAME [PROFILE_OPTIONS], profile update NAME [--replace] [PROFILE_OPTIONS], profile delete NAME, profile rename OLD NEW, profile desc DESCRIPTION -p NAME. NAME/OLD/NEW are required strings; DESCRIPTION is a required string (empty allowed). --json and --replace are boolean action flags, default false, and do not accept =false. Profile options use the types and defaults in CLI reference; descriptions are optional unless using legacy desc. list/show require an existing config; create can create a missing document, while update/delete/rename require existing profiles. Every subcommand accepts -h/--help.</p>"
+      },
+      {
+        "id": "save",
+        "title": "Save, merge and replace",
+        "html": "<pre><code>onesource --no-config -i \"*.rs\" --save --dry-run\nonesource -i \"*.toml\" --save --replace --dry-run\nonesource -p review --include=\"\" --no-tree=false --save --dry-run</code></pre><p>Only explicit persistable CLI options are saved, not resolved defaults or loaded profile values. --save creates default if needed, but requesting a missing named profile fails during loading; use --no-config -p NAME --save to create it. Save precedes scanning, including dry runs and copy runs. --no-config skips loading, not the read needed to merge/save; malformed config still prevents save. Existing bundles may be generated with loaded fields that --replace removes from the stored profile. To remove a field entirely, edit JSON or replace the profile; empty filters disable matching without deleting the field.</p>"
+      }
+    ]
+  },
+  "explain": {
+    "title": "Diagnose with explain",
+    "description": "Understand content and tree decisions for individual paths.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "Usage and parameters",
+        "html": "<pre><code>onesource . explain src/main.rs Cargo.toml --include \"*.rs\" --tree-include \"*.toml\"\nonesource /path/to/project explain .env --no-blacklist\nonesource explain missing.txt --no-config</code></pre><p>One or more paths are required; relative paths resolve against the scan root, absolute paths are allowed. Root is the top-level PATH before explain. After explain, all profile options plus -p/--profile, --no-config and compatibility flags --dry-run, --save, --replace, -c/--copy, --show-arg are accepted. Options after explain override top-level options. --desc and the compatibility action flags do not save, replace, copy, generate a bundle or print resolved arguments; explain returns before normal execution. It may read and inspect files.</p>"
+      },
+      {
+        "id": "decisions",
+        "title": "All diagnostic results",
+        "html": "<p>Content and Tree are reported separately, with the matching Rule when applicable. Missing paths report Content only. Results: included; included with lossy UTF-8 replacement characters; not found; outside the scan root; excluded because it is the current output file; not a content file (directory or special path); disabled by --no-tree; blocked by blacklist; blocked by ignore filters; blocked by exclude; not included by include; skipped by max-size (limit and actual bytes); skipped because binary file; skipped because unreadable (read error). A successful explanation can report blocked paths without an execution error.</p><pre><code>included\nincluded with lossy UTF-8 replacement characters\nnot found\noutside the scan root\nexcluded because it is the current output file\nnot a content file (directory or special path)\ndisabled by --no-tree\nblocked by blacklist\nblocked by ignore filters\nblocked by exclude\nnot included by include\nskipped by max-size\nskipped because binary file\nskipped because unreadable</code></pre>"
+      },
+      {
+        "id": "example",
+        "title": "Read a diagnostic report",
+        "html": "<pre><code>onesource explain Cargo.toml --no-config -i \"*.rs\" --ti \"*.toml\"\n# Content: not included by include; Rule: include = *.rs\n# Tree: included</code></pre><p>Use this when a file is visible in the tree but absent from attached content. Explain inspects a path at the current moment; symlink canonicalization and ignore traversal can differ from scan traversal, so use --dry-run to verify the complete selection.</p>"
+      }
+    ]
+  },
+  "output": {
+    "title": "Output and statistics",
+    "description": "Bundle format, paths, replacement, clipboard and token estimates.",
+    "sections": [
+      {
+        "id": "format",
+        "title": "Text bundle format",
+        "html": "<pre><code>my-project/\n└── src/\n    └── main.rs\n&lt;file path=\"src/main.rs\"&gt;\nfn main() {}\n&lt;/file&gt;</code></pre><p>UTF-8 text, with optional tree followed by file blocks using relative paths. Path attributes escape &amp;, &lt;, &gt;, quotes and apostrophes. File contents are inserted verbatim except lossy UTF-8 conversion; closing tags in contents are not escaped. This is a text convention, not a guaranteed valid XML document. Existing trailing newlines are kept and another newline is added before the closing tag.</p>"
+      },
+      {
+        "id": "paths",
+        "title": "Paths and replacing existing output",
+        "html": "<p>Default: canonical scan-root folder name plus .onesource (fallback project.onesource), written in the working directory. -o overrides it; no extension is enforced. Parent directories are not created. The current output is excluded even when blacklist is disabled. File mode renders into a unique temporary file beside output, flushes and syncs it, then replaces output. Render failure preserves previous output. On Windows replacement temporarily renames existing output to a backup and attempts restoration if rename fails. Config saves are separate and not rolled back.</p>"
+      },
+      {
+        "id": "clipboard",
+        "title": "Clipboard and dry-run combinations",
+        "html": "<pre><code>onesource -o review.txt\nonesource --copy\nonesource --dry-run --copy\nonesource --dry-run --save -i \"*.rs\"</code></pre><p>File mode writes review.txt. Copy mode buffers the complete bundle in memory and uses the desktop clipboard without writing a file. Dry-run takes precedence over copy and prints a warning; no clipboard access occurs. Dry-run with save still writes .onesourcerc. Generated content is not streamed to stdout: only the tree, progress and statistics appear. -o still defines the operational exclusion in copy/dry-run mode.</p>"
+      },
+      {
+        "id": "statistics",
+        "title": "Token estimates and counts",
+        "html": "<p>Files Processed counts successfully read attached files. Files Skipped counts inspection failures plus content/tree walk errors; it is not the number excluded by glob, ignore or blacklist and may count traversal errors from both walks. Per-file messages report content tokens only. Estimated Output Tokens uses cl100k_base on separately written tree, opening tag, content and closing fragments; it includes wrappers but can differ from tokenizing the final concatenated text and from your model tokenizer. Dry-run uses the same rendering estimate. No exact context-limit guarantee is provided.</p>"
+      }
+    ]
+  },
+  "update": {
+    "title": "Updating and source builds",
+    "description": "Self-update behavior, supported assets and recovery options.",
+    "sections": [
+      {
+        "id": "update",
+        "title": "Self-update flow",
+        "html": "<pre><code>onesource update\nonesource --version</code></pre><p>update has no custom options or profile effects. It locates the running executable, fetches GitHub latest release metadata, compares versions, downloads the matching asset beside the executable and replaces it. It stops if current version is already equal or newer. Numeric dot components are compared after stripping v/V and prerelease suffixes; nonnumeric versions fall back to normalized inequality. This is not full SemVer ordering.</p>"
+      },
+      {
+        "id": "platforms",
+        "title": "Platform requirements and failure handling",
+        "html": "<p>Published assets: Windows x86_64 onesource.exe, Linux x86_64 GNU onesource-linux, macOS Intel onesource-macos and Apple Silicon onesource-macos-arm64. Unix updater requires sh, curl, grep, cut, head and chmod; Windows uses PowerShell and starts a background replacement after process exit. Recheck version in a new terminal. Linux and Windows asset selection does not check architecture, so use source builds for other architectures. Unsupported OS/macOS architectures fail. The executable directory must be writable. Network/API limits, missing assets or permissions can stop update; no checksum verification or transactional rollback is implemented. A failed update may leave onesource-update-PID files. Inspect the error, verify which executable PATH selects, and reinstall the correct release or use Cargo.</p>"
+      },
+      {
+        "id": "source",
+        "title": "Cargo and source builds",
+        "html": "<pre><code>cargo install onesource --force\ngit clone https://github.com/TW-RF54732/onesource.git\ncd onesource\ncargo build --release\n./target/release/onesource --version</code></pre><p>Cargo installs to its bin directory (usually ~/.cargo/bin). On Windows run .\\target\\release\\onesource.exe. Install the Rust toolchain and platform linker first. Self-update replaces even a Cargo/source binary with a published binary; use Cargo or rebuild if you need custom architecture or build settings.</p>"
+      }
+    ]
+  },
+  "troubleshooting": {
+    "title": "Troubleshooting and limits",
+    "description": "Resolve installation, selection, configuration and output problems.",
+    "sections": [
+      {
+        "id": "installation",
+        "title": "Command, permissions and download errors",
+        "html": "<p>Command not found: restart the terminal and check PATH with command -v onesource (Unix) or Get-Command onesource (PowerShell). Compare onesource --version to the intended executable. Permission denied: check executable permissions, output parent and install directory; use a writable user directory or Cargo. Missing release URL: check GitHub availability/API limits and select a supported asset manually. The Unix installer does not fail fast on every failed command; its completion banner alone does not prove a valid installation. Verify --version. Clipboard unavailable: retry without --copy, especially over SSH or headless sessions.</p>"
+      },
+      {
+        "id": "selection",
+        "title": "Missing files and read failures",
+        "html": "<pre><code>onesource explain src/main.rs --no-config\nonesource --no-config --dry-run --show-arg\nonesource explain .env --no-ignore --no-blacklist</code></pre><p>Check root, active profile, ignore, blacklist, exclude/include and max-size. Binary detection only checks for any NUL byte; other nontext bytes may pass. Invalid UTF-8 becomes replacement characters with a warning. Non-UTF-8 filenames are displayed lossily, so distinct paths can look identical. Unreadable candidates are skipped with warnings; traversal failures increase skipped counts. Directory symlinks are not recursively followed; outside-root file symlinks are skipped. Explain is diagnostic, not a guarantee that every special path can be safely read. Keep the scan root limited to a normal project directory.</p>"
+      },
+      {
+        "id": "migration",
+        "title": "Configuration migration and save errors",
+        "html": "<p>Old flat JSON must be wrapped as {\"profiles\":{\"default\":{...}}}. Back up the file first; automatic migration is not performed. Invalid types or malformed JSON stop config reads. --no-config can bypass loading for a normal scan, but not config reads by management or --save. Unknown fields can be silently ignored and are dropped when rewritten. Missing explicitly selected profiles fail; create one first or use --no-config -p NAME --save. --replace without --save fails in normal runs. Profile writes are direct writes, not atomic; avoid concurrent edits.</p>"
+      },
+      {
+        "id": "limits",
+        "title": "Current behavior limits",
+        "html": "<p>Selection and reading are separate steps; concurrent changes can affect output. Files are read whole; copy mode also buffers the complete bundle. Dry-run still reads and tokenizes. Token estimates are approximate. The blacklist is a fixed safeguard, not a complete secret detector. Output overwrites the chosen file after successful rendering; there is no confirmation prompt. Parent folders must exist. Normal output is a file or clipboard, not a stdout-only mode. There is no configuration inheritance, profile export command or recursive config discovery.</p>"
+      }
+    ]
+  }
+}

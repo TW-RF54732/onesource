@@ -7,7 +7,7 @@
   <a class="skip-link" href="#about">{{skip}}</a>
   <header class="header container">
     <a class="wordmark" href="#top" aria-label="OneSource">OneSource<span aria-hidden="true"> /</span></a>
-    <a class="header-guide text-link" href="{{installUrl}}">{{guideLink}}</a>
+    <nav class="header-links" aria-label="{{navigationLabel}}"><a href="{{docsUrl}}">{{docsLabel}}</a><a href="{{repositoryUrl}}">GitHub ↗</a></nav>
     <nav class="languages" aria-label="{{languageLabel}}">
       <a href="{{zhUrl}}" data-language="zh" lang="zh-Hant" {{zhCurrent}}>繁中</a>
       <span aria-hidden="true">/</span>
@@ -25,7 +25,7 @@
           <p class="tagline">{{tagline}}</p>
           <div class="actions">
             <a class="button primary" href="#about"><span>{{learn}}</span><span aria-hidden="true">↓</span></a>
-            <a class="button secondary" href="https://github.com/TW-RF54732/onesource">GitHub <span aria-hidden="true">↗</span></a>
+            <a class="button secondary" href="{{installUrl}}">{{guideLink}} <span aria-hidden="true">→</span></a>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ Path 1/1: ./target
         <article><h3>{{cargoTitle}}</h3><p>{{cargoText}}</p><pre><code>cargo install onesource</code></pre></article>
         <article><h3>{{unixTitle}}</h3><p>{{unixText}}</p><pre><code>curl -sSL https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.sh | bash</code></pre></article>
         <article><h3>{{windowsTitle}}</h3><p>{{windowsText}}</p><pre><code>irm https://raw.githubusercontent.com/TW-RF54732/onesource/main/install.ps1 | iex</code></pre></article>
-        <article class="workflow-explain"><div><h3>{{quickTitle}}</h3><p>{{quickText}}</p><p>{{quickNote}}</p><a class="text-link" href="https://github.com/TW-RF54732/onesource/releases">{{downloadText}} ↗</a></div><pre><code>onesource --dry-run
+        <article class="workflow-explain"><div><h3>{{quickTitle}}</h3><p>{{quickText}}</p><p>{{quickNote}}</p><a class="text-link" href="https://github.com/TW-RF54732/onesource/releases">{{downloadText}} ↗</a><p><a class="text-link" href="{{repositoryUrl}}/releases">{{releaseNotes}} ↗</a></p></div><pre><code>onesource --dry-run
 onesource
 onesource --copy</code></pre></article>
       </div>

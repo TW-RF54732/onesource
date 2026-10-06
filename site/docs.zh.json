@@ -1,0 +1,222 @@
+{
+  "": {
+    "title": "文件",
+    "description": "OneSource 完整操作文件：安裝、打包、篩選、設定與診斷專案。",
+    "sections": [
+      {
+        "id": "overview",
+        "title": "OneSource 的功能",
+        "html": "<p>OneSource 將本機專案整理成目錄樹與文字檔案區塊，方便檢閱或提供 AI 上下文。支援 glob 篩選、ignore 規則、可重複使用的 profile、剪貼簿輸出、預覽及逐路徑診斷。一般打包在本機執行；安裝與自動更新會連線 GitHub。</p>"
+      },
+      {
+        "id": "reading-order",
+        "title": "建議閱讀順序",
+        "html": "<p>先閱讀安裝教學與快速開始。透過 CLI 參考、檔案篩選及目錄樹控制收錄內容；使用 profile 重複套用設定，並以診斷找出遺漏檔案的原因。輸出、更新及疑難排解說明交付與維護方式。</p>"
+      },
+      {
+        "id": "index",
+        "title": "完整文件索引",
+        "html": "{{index}}"
+      }
+    ]
+  },
+  "getting-started": {
+    "title": "快速開始",
+    "description": "預覽並建立第一份 OneSource 打包輸出，再透過 profile 重複使用。",
+    "sections": [
+      {
+        "id": "first-run",
+        "title": "首次預覽與打包",
+        "html": "<p>在專案資料夾開啟終端機。以下指令略過已儲存設定，以內建預設值操作。預覽仍會讀取檔案內容並估算 token，但不會建立打包檔。</p><pre><code>cd my-project\nonesource --no-config --dry-run\nonesource --no-config</code></pre>"
+      },
+      {
+        "id": "read-output",
+        "title": "閱讀輸出",
+        "html": "<p>畫面會顯示目錄樹、+ 檔案訊息及統計。預設在目前工作目錄建立 my-project.onesource。以文字方式開啟，可先看到目錄樹，再看到 &lt;file path=\"…\"&gt; 區塊。[EXPECT] 表示預覽中可讀取的檔案；[SKIP] 表示過大、二進位或無法讀取的候選檔案。</p>"
+      },
+      {
+        "id": "example",
+        "title": "完整操作範例",
+        "html": "<pre><code>onesource --no-config -i \"src/**,Cargo.toml\" -x \"src/legacy/\" --dry-run\nonesource --no-config -i \"src/**,Cargo.toml\" -x \"src/legacy/\" -o review.onesource\nonesource profile create review -i \"src/**,Cargo.toml\" -x \"src/legacy/\"\nonesource -p review --dry-run\nonesource -p review --copy</code></pre><p>第一行預覽選定原始碼與 Cargo.toml；第二行寫入 review.onesource。create 只儲存設定。最後一行將產生的文字複製到剪貼簿，不建立輸出檔，需要可用的桌面剪貼簿。</p>"
+      }
+    ]
+  },
+  "cli": {
+    "title": "CLI 參考",
+    "description": "OneSource 所有參數、選項、別名及指令。",
+    "sections": [
+      {
+        "id": "syntax",
+        "title": "語法與布林值",
+        "html": "<pre><code>onesource [PATH] [OPTIONS]\nonesource [PATH] profile &lt;COMMAND&gt;\nonesource [PATH] explain &lt;PATHS&gt;... [OPTIONS]\nonesource update\nonesource help profile update</code></pre><p>可儲存的布林選項與 --show-arg 接受單獨旗標（true）或 =true/=false；請用 --no-tree=false，不能用 --no-tree false。--copy、--save、--dry-run 等動作旗標不接受 =false。頂層選項不是全域選項：根目錄與頂層選項置於子指令前；explain 與 profile create/update 自有選項可置於子指令後。</p>"
+      },
+      {
+        "id": "options",
+        "title": "完整參數與選項",
+        "html": "<div class=\"guide-table\"><table><thead><tr><th>語法</th><th>欄位、型別、預設值</th><th>適用指令與 profile 儲存</th><th>行為與範例</th></tr></thead><tbody><tr><th scope=\"row\"><code>[PATH]</code></th><td><code>path</code><br>目錄；.</td><td>頂層<br>不可存 profile</td><td>掃描根目錄；必須存在且為目錄。置於子指令前。只讀取 PATH/.onesourcerc，不向上搜尋。<p><code>onesource ./my-project --dry-run</code></p><p>預覽指定根目錄。</p></td></tr><tr><th scope=\"row\"><code>-o, --output-path PATH</code></th><td><code>output_path</code><br>路徑；&lt;根目錄名稱&gt;.onesource</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>即使掃描其他根目錄，相對輸出路徑仍以目前工作目錄為準。目前輸出永遠排除；寫檔前父目錄必須已存在。<p><code>onesource -o review.txt</code></p><p>在目前工作目錄寫入 review.txt。</p></td></tr><tr><th scope=\"row\"><code>-i, --include GLOBS</code></th><td><code>include</code><br>字串；未設定（全部）</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>逗號分隔的模式。空字串清除篩選；黑名單與 ignore 仍有效。目錄樹繼承此值，除非另行覆寫。<p><code>onesource -i &quot;*.rs&quot; --dry-run</code></p><p>預覽符合其他規則的 Rust 檔。</p></td></tr><tr><th scope=\"row\"><code>-x, --exclude GLOBS</code></th><td><code>exclude</code><br>字串；未設定</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>exclude 優先於 include。空字串清除此篩選。目錄樹繼承此值，除非另行覆寫。<p><code>onesource -x &quot;*.log&quot; --dry-run</code></p><p>從內容與繼承樹移除 log 路徑。</p></td></tr><tr><th scope=\"row\"><code>--tree-include, --ti GLOBS</code></th><td><code>tree_include</code><br>字串；繼承 include</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>只覆寫目錄樹的 include；使用 =\"\" 可列出其他規則允許的所有結構路徑。<p><code>onesource -i &quot;*.rs&quot; --ti &quot;*.toml&quot; --dry-run</code></p><p>樹顯示 TOML；內容選取 Rust。</p></td></tr><tr><th scope=\"row\"><code>--tree-exclude, --tx GLOBS</code></th><td><code>tree_exclude</code><br>字串；繼承 exclude</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>只覆寫目錄樹的 exclude；空字串取消繼承的排除模式。<p><code>onesource -x &quot;*.log&quot; --tx &quot;&quot; --dry-run</code></p><p>樹不再繼承 log 排除。</p></td></tr><tr><th scope=\"row\"><code>--no-ignore[=BOOL]</code></th><td><code>no_ignore</code><br>布林；false</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>停用內容掃描的標準 ignore 篩選。目錄樹繼承，除非設定 tree-no-ignore；不會停用黑名單。<p><code>onesource --no-ignore --dry-run</code></p><p>略過 ignore，保留黑名單。</p></td></tr><tr><th scope=\"row\"><code>--tree-no-ignore[=BOOL]</code></th><td><code>tree_no_ignore</code><br>布林；繼承 no_ignore</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>獨立覆寫目錄樹 ignore 行為。明確 false 可在 --no-ignore 時仍保留樹的 ignore 規則。<p><code>onesource --no-ignore --tree-no-ignore=false --dry-run</code></p><p>樹仍遵循 ignore。</p></td></tr><tr><th scope=\"row\"><code>--no-tree[=BOOL]</code></th><td><code>no_tree</code><br>布林；false</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>只省略目錄樹，不影響附加檔案內容。<p><code>onesource --no-tree --dry-run</code></p><p>不顯示樹，保留檔案預覽。</p></td></tr><tr><th scope=\"row\"><code>--no-blacklist[=BOOL]</code></th><td><code>no_blacklist</code><br>布林；false</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>停用內容與樹的內建黑名單。目前輸出仍排除；ignore 與 glob 篩選仍有效。<p><code>onesource explain .env --no-blacklist</code></p><p>不以內建黑名單阻擋 .env。</p></td></tr><tr><th scope=\"row\"><code>-m, --max-size KIB</code></th><td><code>max_size</code><br>非負 usize；500 KiB</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>只影響內容。位元組數 > KIB × 1024 才跳過；等於上限可收錄。0 只允許空檔，目錄樹不受影響。<p><code>onesource -m 1 --dry-run</code></p><p>每個內容檔最多 1024 位元組。</p></td></tr><tr><th scope=\"row\"><code>--desc TEXT</code></th><td><code>description</code><br>字串；未設定</td><td>一般執行、explain、profile create/update<br>可存 profile</td><td>搭配 --save 或 profile create/update 儲存。不影響選檔，允許空字串。explain 接受但不使用。<p><code>onesource --desc &quot;Review&quot; --save --dry-run</code></p><p>將描述存到 default。</p></td></tr><tr><th scope=\"row\"><code>-p, --profile NAME</code></th><td><code>profile</code><br>字串；default</td><td>一般執行、explain<br>不可存 profile</td><td>只載入一個 profile，不將 default 合併到具名 profile。明確指定不存在的 profile 會報錯，除非 --no-config。<p><code>onesource -p review --dry-run</code></p><p>以已存在的 review profile 預覽。</p></td></tr><tr><th scope=\"row\"><code>--no-config</code></th><td><code>no_config</code><br>旗標；false</td><td>一般執行、explain<br>不可存 profile</td><td>略過載入設定；--save 仍會讀寫設定文件。<p><code>onesource --no-config --dry-run</code></p><p>使用內建值與明確 CLI 選項。</p></td></tr><tr><th scope=\"row\"><code>--dry-run</code></th><td><code>dry_run</code><br>旗標；false</td><td>一般執行、explain<br>不可存 profile</td><td>讀檔並估算輸出，不寫打包檔或剪貼簿。--save 仍會在掃描前儲存設定。<p><code>onesource --dry-run</code></p><p>列出預期檔與估算，不建立打包檔。</p></td></tr><tr><th scope=\"row\"><code>-c, --copy</code></th><td><code>copy</code><br>旗標；false</td><td>一般執行、explain<br>不可存 profile</td><td>將完整打包內容複製到剪貼簿，取代寫檔。--dry-run 取消複製；剪貼簿錯誤會停止執行。<p><code>onesource --copy</code></p><p>複製打包內容，不寫輸出檔。</p></td></tr><tr><th scope=\"row\"><code>--save</code></th><td><code>save</code><br>旗標；false</td><td>一般執行、explain<br>不可存 profile</td><td>掃描前將明確指定、可儲存的選項新增或合併到使用中 profile；後續掃描失敗不會撤銷儲存。<p><code>onesource -i &quot;*.rs&quot; --save --dry-run</code></p><p>將明確 include 合併到 default。</p></td></tr><tr><th scope=\"row\"><code>--replace</code></th><td><code>replace</code><br>旗標；false</td><td>一般執行、explain<br>不可存 profile</td><td>一般執行必須搭配 --save；移除未指定的已存欄位。profile update 也支援 --replace。<p><code>onesource --save --replace -i &quot;*.rs&quot; --dry-run</code></p><p>已存 default 只含明確 include。</p></td></tr><tr><th scope=\"row\"><code>--show-arg[=BOOL]</code></th><td><code>show_arg</code><br>布林；false</td><td>一般執行、explain<br>不可存 profile</td><td>一般執行與統計完成後印出解析後 AppConfig。explain 接受但不印出。<p><code>onesource --show-arg --dry-run</code></p><p>統計後印出解析參數。</p></td></tr><tr><th scope=\"row\"><code>-h, --help</code></th><td><code>help</code><br>旗標；不執行</td><td>所有指令<br>不可存 profile</td><td>顯示目前指令說明。也支援 help 子指令；不是設定欄位。<p><code>onesource explain --help</code></p><p>顯示診斷指令說明。</p></td></tr><tr><th scope=\"row\"><code>-V, --version</code></th><td><code>version</code><br>旗標；不執行</td><td>頂層<br>不可存 profile</td><td>在頂層顯示執行檔版本；不是設定欄位。<p><code>onesource --version</code></p><p>印出安裝版本後退出。</p></td></tr></tbody></table></div>"
+      },
+      {
+        "id": "examples",
+        "title": "覆寫與說明",
+        "html": "<pre><code>onesource --no-config --no-tree=false -m 1 --dry-run\nonesource --include=\"\" --tree-exclude=\"\" --dry-run\nonesource explain src/main.rs --no-ignore=false\nonesource profile --help\nonesource profile update --help\nonesource explain --help\nonesource --version</code></pre><p>第一個預覽允許最大 1024 位元組的內容並保留樹。空篩選字串覆寫已存字串。各選項互動列於行為欄；具體輸出範例請參閱對應主題頁。</p>"
+      }
+    ]
+  },
+  "filtering": {
+    "title": "檔案篩選",
+    "description": "glob 比對、ignore 規則與完整內建黑名單。",
+    "sections": [
+      {
+        "id": "glob",
+        "title": "glob 語法",
+        "html": "<p>請用引號包住模式，避免 shell 展開。模式以逗號分隔、去除前後空白，反斜線轉為 /。空項目略過；空清單停用該篩選。globset 支援 *、?、**、字元集合與大括號（CLI 先分割逗號，因此避免在大括號內使用逗號）。比對區分大小寫。目前 Glob 預設允許 * 跨越路徑分隔符。結尾 src/ 轉成 src/**。不含斜線、星號或句點的名稱（如 vendor）會比對任意深度的同名項目與後代；含句點名稱沒有此擴充。無效 glob 會報錯。</p><pre><code>onesource -i \"*.rs,*.toml\" -x \"vendor,src/legacy/\" --dry-run\nonesource --include=\"\" --exclude=\"\" --dry-run</code></pre>"
+      },
+      {
+        "id": "priority",
+        "title": "選取順序與 ignore 規則",
+        "html": "<p>目前輸出獨立排除。標準遍歷篩選遵循 .ignore、.gitignore、Git exclude／全域及父層 ignore 規則，即使不是 Git repository 也有效；隱藏檔不會自動排除。黑名單優先於自訂 glob，exclude 優先於 include。include 無法恢復已忽略或列入黑名單的路徑。explain 先報黑名單、ignore、exclude、include，內容再檢查檔案型別、大小、NUL 位元組與可讀性。--no-ignore 停用標準 ignore 篩選；--no-blacklist 是另一個獨立選項。</p>"
+      },
+      {
+        "id": "blacklist",
+        "title": "完整內建黑名單",
+        "html": "<p>路徑任意位置的元件名稱皆不分大小寫比對；模式針對正規化路徑或檔名，不分大小寫比對。停用清單可能收錄機密與舊打包檔，分享前請檢閱預覽。</p><pre><code>.git, .gitignore, .env, .onesourcerc, .svn, .hg, node_modules,\n__pycache__, venv, .venv, .pytest_cache, .tox, target, .idea, .vscode,\n.DS_Store, .npmrc, .pypirc, .netrc, id_rsa, id_dsa, id_ecdsa, id_ed25519\n\n.env.*, credentials.json, service-account*.json, *.pem, *.key,\n*.p12, *.pfx, *.onesource, .onesource-tmp-*, .onesource-backup-*</code></pre>"
+      }
+    ]
+  },
+  "tree": {
+    "title": "目錄樹",
+    "description": "獨立控制目錄結構與附加檔案內容。",
+    "sections": [
+      {
+        "id": "inheritance",
+        "title": "繼承與覆寫",
+        "html": "<p>目錄樹 include/exclude 分別繼承內容的 include/exclude。明確空字串會覆寫並停用該樹篩選。tree_no_ignore 繼承解析後 no_ignore；明確 false 可覆寫繼承的 true。no_blacklist 同時影響兩者；no_tree 完全停用樹產生。</p>"
+      },
+      {
+        "id": "structure",
+        "title": "結構與附檔的差異",
+        "html": "<p>目錄樹依名稱排序，並補上符合路徑的祖先目錄。樹不檢查大小、NUL 位元組或內容可讀性：二進位或過大檔案可能顯示在樹中卻沒有檔案區塊。不會遞迴跟隨符號連結目錄。指向根目錄外的連結可能出現在樹中，但內容跳過。內容候選檔依相對路徑排序。</p>"
+      },
+      {
+        "id": "examples",
+        "title": "獨立目錄樹範例",
+        "html": "<pre><code>onesource -i \"*.rs\" --ti \"\" --tx \"target/\" --dry-run\nonesource --no-ignore --tree-no-ignore=false --dry-run\nonesource --no-tree --dry-run</code></pre><p>第一行：只附加 Rust 內容，樹則顯示 target 與其他阻擋規則以外的路徑。第二行：內容略過 ignore，樹仍遵循 ignore。第三行：預覽內容但省略樹。</p>"
+      }
+    ]
+  },
+  "profiles": {
+    "title": "設定與 profile",
+    "description": "所有設定欄位、優先順序與 profile 管理指令。",
+    "sections": [
+      {
+        "id": "schema",
+        "title": "設定結構與優先順序",
+        "html": "<p>JSON 位於掃描根目錄/.onesourcerc。明確 CLI 值優先於選定 profile，最後套用內建預設值。default profile 可省略；具名 profile 不繼承它。serde 會忽略未知欄位。省略或 null 使用預設／繼承；空字串與 false 是明確值。欄位型別、預設及效果列於 CLI 參考。只會儲存以下欄位；path、profile 選擇、copy、dry_run、save、replace、no_config、show_arg 不會儲存。</p><pre><code>{\n  \"profiles\": {\n    \"default\": {\n      \"description\": \"原始碼檢閱\",\n      \"output_path\": \"review.onesource\",\n      \"include\": \"src/**\",\n      \"exclude\": \"src/legacy/\",\n      \"tree_include\": \"\",\n      \"tree_exclude\": \"target/\",\n      \"max_size\": 500,\n      \"no_ignore\": false,\n      \"tree_no_ignore\": false,\n      \"no_tree\": false,\n      \"no_blacklist\": false\n    }\n  }\n}</code></pre>"
+      },
+      {
+        "id": "commands",
+        "title": "所有 profile 指令",
+        "html": "<pre><code>onesource profile list\nonesource profile ls --json\nonesource profile show review --json\nonesource profile create review -i \"src/**\" --desc \"Review\"\nonesource profile update review -m 100\nonesource profile update review --replace -i \"*.rs\"\nonesource profile rename review backend\nonesource profile delete backend\nonesource profile rm default\nonesource profile desc \"舊版描述\" -p review</code></pre><p>list 依名稱排序；--json 輸出 {name, profile} 陣列。show 顯示未設定欄位，或輸出已存 JSON 物件。create 遇到同名會報錯。update 必須已有 profile；合併保留未指定欄位，--replace 丟棄它們（包含描述）。rename 要求來源存在、目標未使用。delete 要求存在；刪除 default 後，未指定 profile 的執行恢復內建值。ls、rm 是隱藏別名。desc 是隱藏舊版指令，必須帶 -p/--profile，相當於更新描述。名稱只能由非空 ASCII 英數、句點、底線或連字號組成。管理指令使用掃描根目錄，即使頂層 --no-config 仍讀取設定；不打包檔案。</p><p>指令語法：profile list [--json]、profile show NAME [--json]、profile create NAME [PROFILE_OPTIONS]、profile update NAME [--replace] [PROFILE_OPTIONS]、profile delete NAME、profile rename OLD NEW、profile desc DESCRIPTION -p NAME。NAME／OLD／NEW 是必填字串；DESCRIPTION 是必填字串（可空白）。--json 與 --replace 為布林動作旗標，預設 false，不接受 =false。profile 選項的型別與預設值見 CLI 參考；描述可省略，舊版 desc 除外。list/show 要求設定文件存在；create 可建立不存在的文件，update/delete/rename 則要求 profile 存在。每個子指令皆接受 -h/--help。</p>"
+      },
+      {
+        "id": "save",
+        "title": "儲存、合併與取代",
+        "html": "<pre><code>onesource --no-config -i \"*.rs\" --save --dry-run\nonesource -i \"*.toml\" --save --replace --dry-run\nonesource -p review --include=\"\" --no-tree=false --save --dry-run</code></pre><p>只儲存明確指定且可保存的 CLI 選項，不儲存解析後預設或載入值。--save 可建立 default；但要求不存在的具名 profile 會先在載入時失敗，建立時可用 --no-config -p NAME --save。儲存早於掃描，包含預覽與複製。--no-config 只略過載入，不略過合併／儲存所需的讀取；損壞設定仍阻止儲存。當次打包可能使用已載入、卻被 --replace 從已存 profile 移除的欄位。完全移除欄位請編輯 JSON 或取代 profile；空篩選停用比對但不刪除欄位。</p>"
+      }
+    ]
+  },
+  "explain": {
+    "title": "使用 explain 診斷",
+    "description": "了解個別路徑的內容與目錄樹判斷結果。",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "用法與參數",
+        "html": "<pre><code>onesource . explain src/main.rs Cargo.toml --include \"*.rs\" --tree-include \"*.toml\"\nonesource /path/to/project explain .env --no-blacklist\nonesource explain missing.txt --no-config</code></pre><p>必須提供至少一個路徑；相對路徑以掃描根目錄為準，也接受絕對路徑。根目錄是 explain 前的頂層 PATH。explain 後接受所有 profile 選項，以及 -p/--profile、--no-config 和相容旗標 --dry-run、--save、--replace、-c/--copy、--show-arg。explain 後的選項優先於頂層選項。--desc 與相容動作旗標不會儲存、取代、複製、產生打包檔或印出解析參數；explain 在一般執行前即返回。它可能讀取與檢查檔案。</p>"
+      },
+      {
+        "id": "decisions",
+        "title": "完整診斷結果",
+        "html": "<p>Content 與 Tree 分別報告，適用時顯示匹配的 Rule。不存在路徑只報 Content。結果包含：included（收錄）、included with lossy UTF-8 replacement characters（以替代字元收錄）、not found（不存在）、outside the scan root（根目錄外）、excluded because it is the current output file（目前輸出）、not a content file（目錄或特殊路徑）、disabled by --no-tree（停用樹）、blocked by blacklist（黑名單）、blocked by ignore filters（ignore）、blocked by exclude（排除）、not included by include（未匹配 include）、skipped by max-size（顯示上限及實際位元組）、skipped because binary file（二進位）、skipped because unreadable（顯示讀取錯誤）。成功的診斷可以回報阻擋路徑，不一定代表指令執行錯誤。</p><pre><code>included\nincluded with lossy UTF-8 replacement characters\nnot found\noutside the scan root\nexcluded because it is the current output file\nnot a content file (directory or special path)\ndisabled by --no-tree\nblocked by blacklist\nblocked by ignore filters\nblocked by exclude\nnot included by include\nskipped by max-size\nskipped because binary file\nskipped because unreadable</code></pre>"
+      },
+      {
+        "id": "example",
+        "title": "閱讀診斷範例",
+        "html": "<pre><code>onesource explain Cargo.toml --no-config -i \"*.rs\" --ti \"*.toml\"\n# Content: not included by include; Rule: include = *.rs\n# Tree: included</code></pre><p>當檔案出現在目錄樹卻沒有附加內容時，可使用此方式。explain 檢查當下路徑；符號連結正規化與 ignore 遍歷可能和掃描不同，請再以 --dry-run 驗證完整選取結果。</p>"
+      }
+    ]
+  },
+  "output": {
+    "title": "輸出與統計",
+    "description": "打包格式、路徑、覆寫、剪貼簿與 token 估算。",
+    "sections": [
+      {
+        "id": "format",
+        "title": "文字打包格式",
+        "html": "<pre><code>my-project/\n└── src/\n    └── main.rs\n&lt;file path=\"src/main.rs\"&gt;\nfn main() {}\n&lt;/file&gt;</code></pre><p>UTF-8 文字，先放可選目錄樹，再放使用相對路徑的檔案區塊。路徑屬性逸出 &amp;、&lt;、&gt;、雙引號與單引號。內容除了非 UTF-8 替代轉換外原樣插入；內容中的結束標籤不逸出。這是文字慣例，不保證為有效 XML。既有尾端換行保留，結束標籤前再加一個換行。</p>"
+      },
+      {
+        "id": "paths",
+        "title": "路徑與覆寫既有輸出",
+        "html": "<p>預設為正規化掃描根目錄名稱加 .onesource（備援 project.onesource），寫入目前工作目錄。-o 可覆寫，不強制副檔名，也不自動建立父目錄。即使停用黑名單，目前輸出仍排除。寫檔模式先在旁邊建立唯一暫存檔，寫入、flush、sync 後取代輸出。產生失敗會保留原輸出。Windows 先把原檔改名為備份，取代失敗則嘗試還原。設定儲存是獨立動作，不會回復。</p>"
+      },
+      {
+        "id": "clipboard",
+        "title": "剪貼簿與預覽組合",
+        "html": "<pre><code>onesource -o review.txt\nonesource --copy\nonesource --dry-run --copy\nonesource --dry-run --save -i \"*.rs\"</code></pre><p>寫檔模式建立 review.txt。複製模式將完整打包內容暫存在記憶體並使用桌面剪貼簿，不寫檔。dry-run 優先於 copy，印出警告且不存取剪貼簿。dry-run 搭配 save 仍寫 .onesourcerc。完整內容不會串流到 stdout；畫面只顯示樹、進度與統計。copy／dry-run 中，-o 仍決定目前輸出的排除路徑。</p>"
+      },
+      {
+        "id": "statistics",
+        "title": "token 估算與數量",
+        "html": "<p>Files Processed 計算成功讀取的附加檔案。Files Skipped 計算內容檢查失敗及內容／樹遍歷錯誤，不是 glob、ignore 或黑名單排除數量，也可能計入兩次遍歷的錯誤。逐檔訊息只報內容 token。Estimated Output Tokens 以 cl100k_base 分別計算寫入的樹、開頭標籤、內容與結尾片段；包含包裝，但可能不同於完整串接文字或模型 tokenizer 的結果。預覽使用相同產生估算，不保證符合精確上下文上限。</p>"
+      }
+    ]
+  },
+  "update": {
+    "title": "更新與原始碼建置",
+    "description": "自動更新行為、支援執行檔與復原方式。",
+    "sections": [
+      {
+        "id": "update",
+        "title": "自動更新流程",
+        "html": "<pre><code>onesource update\nonesource --version</code></pre><p>update 沒有自訂選項，也不受 profile 影響。它定位正在執行的檔案，取得 GitHub 最新 release 資訊、比較版本、在執行檔旁下載對應資產並取代。相同或較新版本停止更新。移除 v/V 與預發行後綴後比較點分隔數字；非數字版本退回正規化字串是否不同的判斷，不是完整 SemVer 排序。</p>"
+      },
+      {
+        "id": "platforms",
+        "title": "平台需求與失敗處理",
+        "html": "<p>發布資產：Windows x86_64 onesource.exe、Linux x86_64 GNU onesource-linux、macOS Intel onesource-macos、Apple Silicon onesource-macos-arm64。Unix 更新需要 sh、curl、grep、cut、head、chmod；Windows 使用 PowerShell，在程序退出後背景取代，請以新終端機再驗證版本。Linux 與 Windows 選檔不檢查架構，其他架構請從原始碼建置。不支援的 OS／macOS 架構會失敗。執行檔目錄須可寫入。網路／API 限制、缺少資產或權限可能中止更新；目前沒有 checksum 驗證或交易式回復。失敗可能留下 onesource-update-PID 檔。請閱讀錯誤、確認 PATH 選中哪個檔案，再重新安裝正確 release 或使用 Cargo。</p>"
+      },
+      {
+        "id": "source",
+        "title": "Cargo 與原始碼建置",
+        "html": "<pre><code>cargo install onesource --force\ngit clone https://github.com/TW-RF54732/onesource.git\ncd onesource\ncargo build --release\n./target/release/onesource --version</code></pre><p>Cargo 安裝到其 bin 目錄（通常 ~/.cargo/bin）。Windows 使用 .\\target\\release\\onesource.exe。先安裝 Rust 工具鏈與平台 linker。自動更新連 Cargo／原始碼版本也會取代成發布執行檔；若需要自訂架構或建置設定，請使用 Cargo 或重新建置。</p>"
+      }
+    ]
+  },
+  "troubleshooting": {
+    "title": "疑難排解與限制",
+    "description": "排查安裝、選檔、設定與輸出問題。",
+    "sections": [
+      {
+        "id": "installation",
+        "title": "指令、權限與下載錯誤",
+        "html": "<p>找不到指令：重開終端機，用 command -v onesource（Unix）或 Get-Command onesource（PowerShell）檢查 PATH，並比對 --version。權限不足：檢查執行權限、輸出父目錄及安裝目錄，可改用可寫入的使用者目錄或 Cargo。找不到 release URL：檢查 GitHub／API 限制並手動選擇支援資產。Unix 安裝腳本不會對每個失敗指令立即停止，完成標語不代表安裝有效，請驗證 --version。剪貼簿不可用：改用不帶 --copy 的寫檔方式，尤其是 SSH 或無桌面環境。</p>"
+      },
+      {
+        "id": "selection",
+        "title": "遺漏檔案與讀取失敗",
+        "html": "<pre><code>onesource explain src/main.rs --no-config\nonesource --no-config --dry-run --show-arg\nonesource explain .env --no-ignore --no-blacklist</code></pre><p>檢查根目錄、使用中 profile、ignore、黑名單、exclude/include 與 max-size。二進位只透過是否含任何 NUL 位元組判斷；其他非文字位元組可能通過。無效 UTF-8 轉成替代字元並警告。非 UTF-8 檔名以有損方式顯示，不同路徑可能看起來相同。無法讀取的候選檔跳過並警告；遍歷失敗增加 skipped 數。不遞迴跟隨目錄符號連結；指向根外的檔案連結跳過。explain 是診斷，不保證每個特殊路徑皆能安全讀取，請將根目錄限制在一般專案目錄。</p>"
+      },
+      {
+        "id": "migration",
+        "title": "設定遷移與儲存錯誤",
+        "html": "<p>舊版平面 JSON 必須包成 {\"profiles\":{\"default\":{...}}}。先備份，程式不自動遷移。錯誤型別或損壞 JSON 會中止設定讀取。--no-config 可略過一般掃描載入，但無法略過管理指令或 --save 的設定讀取。未知欄位可能被無聲忽略，重寫時會丟棄。明確選取不存在的 profile 會失敗；先建立或用 --no-config -p NAME --save。一般執行 --replace 沒有 --save 會失敗。profile 直接寫入、不是原子操作，請避免同時編輯。</p>"
+      },
+      {
+        "id": "limits",
+        "title": "目前行為限制",
+        "html": "<p>選取與讀取是分開步驟，同時修改可能影響結果。每個檔案整份讀入，copy 也暫存完整打包內容。dry-run 仍讀取並計算 token。token 只是估算；固定黑名單不是完整機密偵測。成功產生後會直接覆寫指定檔案，沒有確認提示。父目錄須存在。一般輸出為檔案或剪貼簿，沒有只輸出 stdout 模式。不支援設定繼承、profile export 指令或遞迴搜尋設定。</p>"
+      }
+    ]
+  }
+}

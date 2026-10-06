@@ -2,10 +2,13 @@
   "name": "onesource-website",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build:site": "node scripts/build-site.mjs",
     "test:site": "node --test tests/site.test.mjs",
-    "preview:site": "node scripts/preview-site.mjs"
+    "preview:site": "node scripts/preview-site.mjs",
+    "test:docs": "cargo build --offline && node --test tests/docs-cli.test.mjs"
   }
 }

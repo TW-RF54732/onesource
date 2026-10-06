@@ -52,7 +52,7 @@
   "windowsText": "在 PowerShell 執行安裝指令，完成後重新開啟終端機以更新 PATH。",
   "quickTitle": "從專案到 AI Context",
   "quickText": "在專案目錄執行以下指令。先預覽選取的檔案，再產生 .onesource 檔案或將 Context 複製到剪貼簿。分享給 AI 前，請確認輸出內容。",
-  "downloadText": "下載免安裝執行檔",
+  "downloadText": "從 GitHub Releases 下載免安裝執行檔",
   "quickNote": "打包在本機執行，不會上傳程式碼。Token 數僅為估算。",
   "guideLink": "安裝教學",
   "guideTitle": "安裝 OneSource — 安裝教學",
@@ -88,7 +88,7 @@
   "guideVerifyIntro": "在新的終端機中檢查版本和可用指令。若看到以 onesource 開頭的版本資訊及指令說明，表示已能執行。版本號會依實際安裝的 release 而不同。",
   "guideFirst": "第一次使用",
   "guideFirstIntro": "將 my-project 換成你的專案資料夾。先預覽選取的檔案與 token 估算，再建立輸出檔。",
-  "guideFirstAfter": "OneSource 會在掃描的專案資料夾中建立 <專案名稱>.onesource，包含目錄樹與選取檔案的內容。若要直接複製 Context 而不建立檔案，執行以下指令。",
+  "guideFirstAfter": "OneSource 在目前工作目錄建立 <專案名稱>.onesource，包含目錄樹與選定檔案內容。若要複製上下文而不建立檔案，請執行以下指令。",
   "guideLocalNote": "打包在本機執行，不會上傳程式碼。分享給 AI 前請確認輸出內容。Token 數僅為估算。",
   "guideUpdate": "更新 OneSource",
   "guideUpdateIntro": "若使用相容的預編譯執行檔，可透過內建更新指令下載最新 GitHub release 並替換目前執行檔。Windows 會在程序結束後完成替換，請在新的終端機驗證版本。",
@@ -105,5 +105,9 @@
   "guideFaqArchText": "對照平台表格下載正確執行檔。macOS／Linux 可使用 uname -m 查看機器架構。沒有對應執行檔的平台，請使用 Cargo 編譯，也透過 Cargo 更新。",
   "guideFaqClipboardTitle": "無法使用剪貼簿",
   "guideFaqClipboardText": "遠端終端機或沒有桌面工作階段的環境可能無法使用剪貼簿。移除 --copy，直接執行 onesource 儲存檔案即可。",
-  "guideMore": "閱讀完整文件"
+  "guideMore": "閱讀完整文件",
+  "docsLabel": "文件",
+  "releaseNotes": "查看釋出版本日誌",
+  "guidePathText": "Windows 安裝到 %LOCALAPPDATA%\\Programs\\onesource 並更新使用者 PATH；請重開終端機。Unix 移到 /usr/local/bin，必要時要求 sudo。Cargo 使用 ~/.cargo/bin。手動安裝請將所在資料夾加入 PATH；Unix 可放在 ~/.local/bin，並於 shell 啟動檔加入 export PATH=\"$HOME/.local/bin:$PATH\"。Windows 在環境變數的使用者 Path 加入資料夾後開啟新終端機。以 command -v onesource 或 Get-Command onesource 確認選中的執行檔。",
+  "guidePathTitle": "設定 PATH"
 }
