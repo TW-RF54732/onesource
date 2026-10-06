@@ -247,3 +247,7 @@ cargo build --release
 ```
 
 編譯後的執行檔位於 `target/release/onesource`（Windows 為 `onesource.exe`）。
+
+## 專案網站
+
+專案網站使用 https://onesource.zynimous.dev，提供英文與繁體中文靜態頁面。建置、預覽、GitHub Pages 部署與 SEO 驗證方式請參考[網站維護說明](site/README.md)。

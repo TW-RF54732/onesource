@@ -248,3 +248,7 @@ cargo build --release
 ```
 
 The compiled binary is at `target/release/onesource` (or `onesource.exe` on Windows).
+
+## Website
+
+The project website is prepared for https://onesource.zynimous.dev with static English and Traditional Chinese pages. See [website development and GitHub Pages setup](site/README.md) for build, preview, deployment, and SEO verification instructions.
