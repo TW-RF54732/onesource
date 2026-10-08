@@ -4,13 +4,12 @@
 <body class="installation-page docs-page">
 <a class="skip-link" href="#content">{{skip}}</a>
 <header class="header container">
-<a class="wordmark" href="{{homeUrl}}" aria-label="OneSource">OneSource<span aria-hidden="true"> /</span></a>
-<nav class="header-links" aria-label="{{navigationLabel}}"><a href="{{docsUrl}}">{{docsLabel}}</a><a href="{{repositoryUrl}}">GitHub ↗</a></nav>
+<nav class="header-path" aria-label="{{breadcrumbLabel}}"><a class="wordmark" href="{{homeUrl}}">OneSource</a><span aria-hidden="true">/</span>{{headerPath}}</nav>
+<nav class="header-links" aria-label="{{navigationLabel}}"><a href="{{repositoryUrl}}">GitHub ↗</a></nav>
 <nav class="languages" aria-label="{{languageLabel}}"><a href="{{zhUrl}}" data-language="zh" lang="zh-Hant" {{zhCurrent}}>繁中</a><span aria-hidden="true">/</span><a href="{{enUrl}}" data-language="en" lang="en" {{enCurrent}}>EN</a></nav>
 </header>
 <main class="container">
-<nav class="breadcrumbs" aria-label="{{breadcrumbLabel}}"><a href="{{homeUrl}}">OneSource</a> / <a href="{{docsUrl}}">{{docsLabel}}</a> / <span>{{heading}}</span></nav>
-<div class="guide-intro"><p class="eyebrow">OneSource / {{docsLabel}}</p><h1>{{heading}}</h1><p>{{description}}</p></div>
+<div class="guide-intro"><h1>{{heading}}</h1><p>{{description}}</p></div>
 <div class="docs-layout">
 <aside class="docs-sidebar"><nav class="desktop-index" aria-label="{{docsLabel}}">{{sidebar}}</nav><details class="mobile-index"><summary>{{docsLabel}}</summary><nav aria-label="{{docsLabel}}">{{sidebar}}</nav></details></aside>
 <article id="content" class="guide-content" tabindex="-1" data-copy-label="{{guideCopy}}" data-copied-label="{{guideCopied}}" data-copy-failed="{{guideCopyFailed}}">

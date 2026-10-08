@@ -154,7 +154,10 @@ pre code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-
 
 /* Shared documentation layout; all navigation works without JavaScript. */
 .header-links { display: flex; gap: 24px; margin-left: auto; margin-right: 24px; font-size: 14px; }
-.breadcrumbs { padding-top: 24px; color: var(--muted); font-size: 14px; }
+.docs-page .header { height: auto; min-height: 88px; flex-wrap: wrap; gap: 16px; padding-block: 20px; }
+.header-path { display: flex; flex: 1 1 280px; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 14px; }
+.header-path [aria-current="page"] { overflow-wrap: anywhere; }
+.docs-page .header-links { margin-right: 8px; }
 .docs-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); padding-bottom: 80px; }
 .docs-sidebar { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; }
 .docs-sidebar a { display: block; padding: 10px 16px; min-height: 44px; border-left: 1px solid var(--line); color: var(--muted); font-size: 14px; }
@@ -182,7 +185,7 @@ pre code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-
 /* Tutorials distinguish commands from output and configuration. */
 .doc-example { background: #171717; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-block: 24px; }
 .doc-example pre { padding: 20px; line-height: 1.8; }
-.doc-output { border-left: 3px solid #718b99; }
+.doc-output { border-left: 3px solid var(--muted); }
 .doc-config { border-left: 3px solid #9b8a67; }
 .docs-page .guide-section h3 { margin-top: 28px; margin-bottom: 12px; font-size: 20px; }
 .docs-page .guide-section p code { overflow-wrap: anywhere; }

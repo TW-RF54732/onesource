@@ -125,6 +125,7 @@ ${alternates}
     const pagination = [position > 0 ? [slugs[position - 1], locale === 'en' ? 'Previous' : '上一頁'] : null, position < slugs.length - 1 ? [slugs[position + 1], locale === 'en' ? 'Next' : '下一頁'] : null].filter(Boolean).map(([page, label]) => `<a href="${pageUrl(locale, page)}">${label}: ${escape(titleFor(page))}</a>`).join('');
     pages.push([path.join(route, 'index.html'), render(isDocs ? docsTemplate : template, {
       ...copy, head, lang: locales[locale].lang, heading, body, toc, pagination,
+      headerPath: slug ? `<a href="${docsUrl}">${escape(copy.docsLabel)}</a><span aria-hidden="true">/</span><span aria-current="page">${escape(titleFor(slug))}</span>` : `<span aria-current="page">${escape(copy.docsLabel)}</span>`,
       sidebar: slugs.map(page => `<a href="${pageUrl(locale, page)}"${page === slug ? ' aria-current="page"' : ''}>${escape(titleFor(page))}</a>`).join(''),
       navigationLabel: locale === 'en' ? 'Main navigation' : '主要導覽',
       breadcrumbLabel: locale === 'en' ? 'Breadcrumbs' : '麵包屑',
@@ -133,7 +134,7 @@ ${alternates}
       enUrl: `/en/${suffix}`, zhUrl: `/zh/${suffix}`,
       enCurrent: locale === 'en' ? 'aria-current="true"' : 'class="language-alternate"',
       zhCurrent: locale === 'zh' ? 'aria-current="true"' : 'class="language-alternate"', docsUrl
-    }, new Set(['head', 'enCurrent', 'zhCurrent', 'body', 'toc', 'sidebar', 'pagination']))]);
+    }, new Set(['head', 'enCurrent', 'zhCurrent', 'body', 'toc', 'sidebar', 'pagination', 'headerPath']))]);
   }
   for (const locale of Object.keys(locales)) {
     const target = `/${locale}/docs/install/`;
